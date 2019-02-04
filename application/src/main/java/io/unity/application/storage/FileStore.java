@@ -200,9 +200,8 @@ public final class FileStore implements Closeable {
      * Gets the number of index files, not including the meta index file.
      *
      * @return The number of index files.
-     * @throws IOException if an I/O error occurs.
      */
-    public int getArchiveCount() throws IOException {
+    public int getArchiveCount() {
         return indexChannels.length;
     }
 

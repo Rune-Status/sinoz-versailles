@@ -1,7 +1,7 @@
 package io.unity.application.cache
 
-import cats.effect.IO
 import io.unity.domain.model.{CharacterProfile, Email}
+import scalaz.zio.IO
 
 import scala.concurrent.duration.Duration
 
@@ -10,6 +10,6 @@ import scala.concurrent.duration.Duration
   * @author Sino
   */
 trait CharacterCache {
-  def get(email: Email): IO[Option[CharacterProfile]]
-  def put(email: Email, profile: CharacterProfile, expireAfter: Duration): IO[Boolean]
+  def get(email: Email): IO[Exception, Option[CharacterProfile]]
+  def put(email: Email, profile: CharacterProfile, expireAfter: Duration): IO[Exception, Boolean]
 }

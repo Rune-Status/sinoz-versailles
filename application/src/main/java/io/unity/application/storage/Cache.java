@@ -145,9 +145,8 @@ public final class Cache implements Closeable {
      * Gets the number of index files, not including the meta index file.
      *
      * @return The number of index files.
-     * @throws IOException if an I/O error occurs.
      */
-    public int getArchiveCount() throws IOException {
+    public int getArchiveCount() {
         return store.getArchiveCount();
     }
 
@@ -251,9 +250,8 @@ public final class Cache implements Closeable {
      * @param type The type of file.
      * @param name The name of the file
      * @return The file id.
-     * @throws IOException
      */
-    public int getFileId(int type, String name) throws IOException {
+    public int getFileId(int type, String name) {
         if (!identifiers.containsKey(name)) {
             ArchiveManifest table = archiveManifests[type];
             identifiers.put(name, table.getLabels().getFile(Djb2.hash(name)));

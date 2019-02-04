@@ -299,7 +299,7 @@ public final class ArchiveManifest {
         /* read the label hash of each and every pack within the folder if present */
         if (manifest.flags != 0) {
             for (int id : ids) {
-                labelHashes = new int[packs[id].length];
+                labelHashes = new int[packs[id].length + 1];
                 for (int packId : packs[id]) {
                     int labelHash = buffer.getInt();
 
