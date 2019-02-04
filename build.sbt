@@ -7,6 +7,8 @@ val commonSettings = Seq(
 val typesafeConfigVersion = "1.3.3"
 val twitterUtilVersion = "19.1.0"
 
+val logbackVersion = "1.2.3"
+
 val zioVersion = "0.6.0"
 val zioInteropVersion = "0.5.0"
 
@@ -38,6 +40,8 @@ lazy val application = project("application")
   .settings(
     libraryDependencies ++= {
       val main = Seq(
+        "ch.qos.logback" % "logback-classic" % logbackVersion,
+        
         "net.debasishg" %% "redisclient" % redisClientVersion,
         
         "org.scalaz" %% "scalaz-zio" % zioVersion,
