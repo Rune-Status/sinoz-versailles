@@ -380,7 +380,7 @@ public final class Cache implements Closeable {
         ArchiveManifest.PackManifest packManifest = folderManifest.getPackManifest(packId);
         if (packManifest == null) {
             packManifest = new ArchiveManifest.PackManifest(packId);
-            folderManifest.putEntry(packId, packManifest);
+            folderManifest.putPack(packId, packManifest);
         }
 
         /* extract the current folder into memory so we can modify it */
@@ -412,7 +412,7 @@ public final class Cache implements Closeable {
         /* create 'dummy' packs */
         for (int id = 0; id < folder.size(); id++) {
             if (folder.getPack(id) == null) {
-                folderManifest.putEntry(id, new ArchiveManifest.PackManifest(id));
+                folderManifest.putPack(id, new ArchiveManifest.PackManifest(id));
                 folder.putPack(id, ByteBuffer.allocate(1));
             }
         }

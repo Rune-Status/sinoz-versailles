@@ -46,14 +46,14 @@ public final class Folder {
      * @return The decoded {@link Folder}.
      */
     public static Folder decode(ByteBuffer buffer, int size) {
-        /* allocate a new archive object */
+        /* allocate a new folder object */
         Folder folder = new Folder(size);
 
-        /* read the number of chunks at the end of the archive */
+        /* read the number of chunks at the end of the folder */
         buffer.position(buffer.limit() - 1);
         int chunks = buffer.get() & 0xFF;
 
-        /* read the sizes of the child entries and individual chunks */
+        /* read the sizes of the pack entries and individual chunks */
         int[][] chunkSizes = new int[chunks][size];
         int[] sizes = new int[size];
         buffer.position(buffer.limit() - 1 - chunks * size * 4);
@@ -72,7 +72,7 @@ public final class Folder {
             }
         }
 
-        /* allocate the buffers for the child entries */
+        /* allocate the buffers for the pack entries */
         for (int id = 0; id < size; id++) {
             folder.packs[id] = ByteBuffer.allocate(sizes[id]);
         }

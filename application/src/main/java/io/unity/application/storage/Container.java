@@ -34,9 +34,9 @@ import java.nio.ByteBuffer;
  *
  * @author Graham
  * @author `Discardedx2
+ * @author Sino
  */
 public final class Container {
-
     /**
      * This type indicates that no compression is used.
      */

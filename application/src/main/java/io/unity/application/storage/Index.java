@@ -50,8 +50,8 @@ public final class Index {
             throw new IllegalArgumentException();
 
         int size = ByteBufferUtils.getMedium(buf);
-        int sector = ByteBufferUtils.getMedium(buf);
-        return new Index(size, sector);
+        int page = ByteBufferUtils.getMedium(buf);
+        return new Index(size, page);
     }
 
     /**

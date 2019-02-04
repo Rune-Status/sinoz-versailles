@@ -31,9 +31,8 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 /**
- * A {@link ArchiveManifest} holds details for all the files with a single type,
- * such as checksums, versions and archive members. There are also optional
- * fields for identifier hashes and whirlpool digests.
+ * An {@link ArchiveManifest} contains checksums, versions of each and every
+ * folder within the archive this manifest is for.
  *
  * @author Graham
  * @author `Discardedx2
@@ -41,6 +40,139 @@ import java.util.TreeMap;
  * @author Sino
  */
 public final class ArchiveManifest {
+    /**
+     * References a folder of files within an {@link ArchiveManifest}.
+     * @author Graham Edgecombe
+     * @author Sino
+     */
+    public static class FolderManifest {
+        /**
+         * The id of this manifest.
+         */
+        private final int id;
+
+        /**
+         * The hash representation of this manifest.
+         */
+        private int identifier = -1;
+
+        /**
+         * The CRC32 checksum of this manifest.
+         */
+        private int crc;
+
+        /**
+         * The version of this manifest.
+         */
+        private int version;
+
+        /**
+         * Contains labels for each and every label.
+         */
+        private LabelHashSet packLabels;
+
+        /**
+         * The children in this entry.
+         */
+        private final SortedMap<Integer, PackManifest> packs = new TreeMap<>();
+
+        /**
+         * Creates a new {@link FolderManifest}.
+         * @param id The id of this manifest within the game cache.
+         */
+        public FolderManifest(int id) {
+            this.id = id;
+        }
+
+        /**
+         * Returns the cache id for this manifest.
+         */
+        public int getId() {
+            return id;
+        }
+
+        /**
+         * Returns the maximum number of child entries.
+         */
+        public int capacity() {
+            if (packs.isEmpty()) {
+                return 0;
+            }
+
+            return packs.lastKey() + 1;
+        }
+
+        /**
+         * Returns the CRC32 checksum of this entry.
+         */
+        public int getCrc() {
+            return crc;
+        }
+
+        /**
+         * Returns the {@link PackManifest} with the specified id.
+         */
+        public PackManifest getPackManifest(int id) {
+            return packs.get(id);
+        }
+
+        /**
+         * Returns the identifier of this manifest.
+         */
+        public int getIdentifier() {
+            return identifier;
+        }
+
+        /**
+         * Returns the version of this manifest.
+         */
+        public int getVersion() {
+            return version;
+        }
+
+        /**
+         * Replaces or inserts the given {@link PackManifest} with the specified id.
+         */
+        public void putPack(int id, PackManifest entry) {
+            packs.put(id, entry);
+        }
+
+        /**
+         * Removes the specified {@link PackManifest}.
+         */
+        public void removePack(int id) {
+            packs.remove(id);
+        }
+
+        /**
+         * Sets the CRC32 checksum of this entry.
+         */
+        public void setCrc(int crc) {
+            this.crc = crc;
+        }
+
+        /**
+         * Returns the identifier of this entry.
+         */
+        public void setIdentifier(int identifier) {
+            this.identifier = identifier;
+        }
+
+        /**
+         * Sets the version of this entry.
+         */
+        public void setVersion(int version) {
+            this.version = version;
+        }
+
+        /**
+         * Returns the number of actual {@link PackManifest}.
+         */
+        public int size() {
+            return packs.size();
+        }
+    }
+
     /**
      * References a pack of files within a {@link Folder}.
      * @author Graham Edgecombe
@@ -75,187 +207,8 @@ public final class ArchiveManifest {
     }
 
     /**
-     * References a folder of files within an {@link ArchiveManifest}.
-     * @author Graham Edgecombe
-     * @author Sino
-     */
-    public static class FolderManifest {
-        /**
-         * The id of this manifest.
-         */
-        private final int id;
-
-        /**
-         * The hash representation of this label.
-         */
-        private int identifier = -1;
-
-        /**
-         * The CRC32 checksum of this folder.
-         */
-        private int crc;
-
-        /**
-         * The hash of this folder.
-         */
-        public int hash;
-
-        /**
-         * The version of this folder.
-         */
-        private int version;
-
-        /**
-         * Child identifiers table
-         */
-        private LabelHashSet packLabels;
-
-        /**
-         * The children in this entry.
-         */
-        private final SortedMap<Integer, PackManifest> packs = new TreeMap<>();
-
-        /**
-         * Creates a new {@link FolderManifest}.
-         * @param id The id of this manifest within the game cache.
-         */
-        public FolderManifest(int id) {
-            this.id = id;
-        }
-
-        /**
-         * Gets the cache index for this entry
-         *
-         * @return The cache index
-         */
-        public int getId() {
-            return id;
-        }
-
-        /**
-         * Gets the maximum number of child entries.
-         *
-         * @return The maximum number of child entries.
-         */
-        public int capacity() {
-            if (packs.isEmpty())
-                return 0;
-
-            return packs.lastKey() + 1;
-        }
-
-        /**
-         * Returns the CRC32 checksum of this entry.
-         */
-        public int getCrc() {
-            return crc;
-        }
-
-        /**
-         * Returns the {@link PackManifest} with the specified id.
-         */
-        public PackManifest getPackManifest(int id) {
-            return packs.get(id);
-        }
-
-        /**
-         * Returns the identifier of this entry.
-         */
-        public int getIdentifier() {
-            return identifier;
-        }
-
-        /**
-         * Returns the version of this entry.
-         */
-        public int getVersion() {
-            return version;
-        }
-
-        /**
-         * Gets the hash this entry
-         *
-         * @return The hash
-         */
-        public int getHash() {
-            return hash;
-        }
-
-        /**
-         * Replaces or inserts the child entry with the specified id.
-         *
-         * @param id    The id.
-         * @param entry The entry.
-         */
-        public void putEntry(int id, PackManifest entry) {
-            packs.put(id, entry);
-        }
-
-        /**
-         * Removes the entry with the specified id.
-         *
-         * @param id The id.
-         */
-        public void removeEntry(int id) {
-            packs.remove(id);
-        }
-
-        /**
-         * Sets the CRC32 checksum of this entry.
-         *
-         * @param crc The CRC32 checksum.
-         */
-        public void setCrc(int crc) {
-            this.crc = crc;
-        }
-
-        /**
-         * Sets the identifier of this entry.
-         *
-         * @param identifier The identifier.
-         */
-        public void setIdentifier(int identifier) {
-            this.identifier = identifier;
-        }
-
-        /**
-         * Sets the version of this entry.
-         *
-         * @param version The version.
-         */
-        public void setVersion(int version) {
-            this.version = version;
-        }
-
-        /**
-         * Gets the number of actual child entries.
-         *
-         * @return The number of actual child entries.
-         */
-        public int size() {
-            return packs.size();
-        }
-
-    }
-
-    /**
-     * A flag which indicates this {@link ArchiveManifest} contains
-     * {@link io.unity.application.storage.util.crypto.Djb2} hashed identifiers.
-     */
-    public static final int FLAG_IDENTIFIERS = 0x01;
-
-    /**
-     * A flag which indicates this {@link ArchiveManifest} contains a type of
-     * hash.
-     */
-    public static final int FLAG_HASH = 0x08;
-
-    /**
-     * Decodes the {@link ArchiveManifest} contained in the specified
+     * Decodes an {@link ArchiveManifest} contained in the specified
      * {@link ByteBuffer}.
-     *
-     * @param buffer The buffer.
-     * @return The {@link ArchiveManifest} output.
      */
     public static ArchiveManifest decode(ByteBuffer buffer) {
         ArchiveManifest manifest = new ArchiveManifest();
@@ -285,34 +238,28 @@ public final class ArchiveManifest {
 
         size++;
 
-        /* and allocate specific entries within that array */
+        /* and allocate the folder manifest for each enlisted folder within the archive */
         int index = 0;
         for (int id : ids) {
             manifest.folderManifests.put(id, new FolderManifest(index++));
         }
 
-        /* read the identifiers if present */
-        int[] identifiersArray = new int[size];
-        if ((manifest.flags & FLAG_IDENTIFIERS) != 0) {
+        /* read the label hashes of each and every folder if present */
+        int[] labelHashes = new int[size];
+        if (manifest.flags != 0) {
             for (int id : ids) {
-                int identifier = buffer.getInt();
-                identifiersArray[id] = identifier;
-                manifest.folderManifests.get(id).identifier = identifier;
+                int labelHash = buffer.getInt();
+
+                labelHashes[id] = labelHash;
+                manifest.folderManifests.get(id).identifier = labelHash;
             }
         }
 
-        manifest.labels = new LabelHashSet(identifiersArray);
+        manifest.labels = new LabelHashSet(labelHashes);
 
         /* read the CRC32 checksums */
         for (int id : ids) {
             manifest.folderManifests.get(id).crc = buffer.getInt();
-        }
-
-        /* read another hash if present */
-        if ((manifest.flags & FLAG_HASH) != 0) {
-            for (int id : ids) {
-                manifest.folderManifests.get(id).hash = buffer.getInt();
-            }
         }
 
         /* read the version numbers */
@@ -320,10 +267,10 @@ public final class ArchiveManifest {
             manifest.folderManifests.get(id).version = buffer.getInt();
         }
 
-        /* read the child sizes */
-        int[][] members = new int[size][];
+        /* read the sizes of each and every pack */
+        int[][] packs = new int[size][];
         for (int id : ids) {
-            members[id] = new int[manifest.format >= 7 ? ByteBufferUtils.getSmartInt(buffer) : buffer.getShort() & 0xFFFF];
+            packs[id] = new int[buffer.getShort() & 0xFFFF];
         }
 
         /* read the child ids */
@@ -333,32 +280,34 @@ public final class ArchiveManifest {
             size = -1;
 
             /* loop through the array of ids */
-            for (int i = 0; i < members[id].length; i++) {
+            for (int i = 0; i < packs[id].length; i++) {
                 int delta = manifest.format >= 7 ? ByteBufferUtils.getSmartInt(buffer) : buffer.getShort() & 0xFFFF;
-                members[id][i] = accumulator += delta;
-                if (members[id][i] > size) {
-                    size = members[id][i];
+                packs[id][i] = accumulator += delta;
+                if (packs[id][i] > size) {
+                    size = packs[id][i];
                 }
             }
             size++;
 
             /* and allocate specific entries within the array */
             index = 0;
-            for (int child : members[id]) {
+            for (int child : packs[id]) {
                 manifest.folderManifests.get(id).packs.put(child, new PackManifest(index++));
             }
         }
 
-        /* read the child identifiers if present */
-        if ((manifest.flags & FLAG_IDENTIFIERS) != 0) {
+        /* read the label hash of each and every pack within the folder if present */
+        if (manifest.flags != 0) {
             for (int id : ids) {
-                identifiersArray = new int[members[id].length];
-                for (int child : members[id]) {
-                    int identifier = buffer.getInt();
-                    identifiersArray[child] = identifier;
-                    manifest.folderManifests.get(id).packs.get(child).labelHash = identifier;
+                labelHashes = new int[packs[id].length];
+                for (int packId : packs[id]) {
+                    int labelHash = buffer.getInt();
+
+                    labelHashes[packId] = labelHash;
+                    manifest.folderManifests.get(id).packs.get(packId).labelHash = labelHash;
                 }
-                manifest.folderManifests.get(id).packLabels = new LabelHashSet(identifiersArray);
+
+                manifest.folderManifests.get(id).packLabels = new LabelHashSet(labelHashes);
             }
         }
 
@@ -367,52 +316,22 @@ public final class ArchiveManifest {
     }
 
     /**
-     * Puts the data into a certain type by the format id.
-     *
-     * @param val The value to put into the buffer.
-     * @param os  The stream.
-     * @throws IOException The exception thrown if an i/o error occurs.
-     */
-    public void putSmartFormat(int val, DataOutputStream os) throws IOException {
-        if (format >= 7)
-            putSmartInt(os, val);
-        else
-            os.writeShort((short) val);
-    }
-
-    /**
-     * Puts a smart integer into the stream.
-     *
-     * @param os    The stream.
-     * @param value The value.
-     * @throws IOException The exception thrown if an i/o error occurs.
-     *                     <p>
-     *                     Credits to Graham for this method.
-     */
-    public static void putSmartInt(DataOutputStream os, int value) throws IOException {
-        if ((value & 0xFFFF) < 32768)
-            os.writeShort(value);
-        else
-            os.writeInt(0x80000000 | value);
-    }
-
-    /**
-     * The format of this table.
+     * The format of this manifest.
      */
     private int format;
 
     /**
-     * The version of this table.
+     * The version of this manifest.
      */
     private int version;
 
     /**
-     * The flags of this table.
+     * The flags of this manifest.
      */
     private int flags;
 
     /**
-     * The entries in this table.
+     * The entries in this manifest.
      */
     private final SortedMap<Integer, FolderManifest> folderManifests = new TreeMap<>();
 
@@ -422,9 +341,7 @@ public final class ArchiveManifest {
     private LabelHashSet labels;
 
     /**
-     * Gets the maximum number of entries in this table.
-     *
-     * @return The maximum number of entries.
+     * Returns the maximum number of entries in this manifest.
      */
     public int capacity() {
         if (folderManifests.isEmpty())
@@ -468,7 +385,7 @@ public final class ArchiveManifest {
             }
 
             /* write the identifiers if required */
-            if ((flags & FLAG_IDENTIFIERS) != 0) {
+            if (flags != 0) {
                 for (FolderManifest entry : folderManifests.values()) {
                     os.writeInt(entry.identifier);
                 }
@@ -477,13 +394,6 @@ public final class ArchiveManifest {
             /* write the CRC checksums */
             for (FolderManifest entry : folderManifests.values()) {
                 os.writeInt(entry.crc);
-            }
-
-            /* write the hashes if required */
-            if ((flags & FLAG_HASH) != 0) {
-                for (FolderManifest entry : folderManifests.values()) {
-                    os.writeInt(entry.hash);
-                }
             }
 
             /* write the versions */
@@ -496,7 +406,7 @@ public final class ArchiveManifest {
                 putSmartFormat(entry.packs.size(), os);
             }
 
-            /* write the child ids */
+            /* write the folder ids */
             for (FolderManifest entry : folderManifests.values()) {
                 last = 0;
                 for (int id = 0; id < entry.capacity(); id++) {
@@ -508,8 +418,8 @@ public final class ArchiveManifest {
                 }
             }
 
-            /* write the child identifiers if required */
-            if ((flags & FLAG_IDENTIFIERS) != 0) {
+            /* write the pack labels if required */
+            if (flags != 0) {
                 for (FolderManifest folder : folderManifests.values()) {
                     for (PackManifest pack : folder.packs.values()) {
                         os.writeInt(pack.labelHash);
@@ -552,27 +462,21 @@ public final class ArchiveManifest {
     }
 
     /**
-     * Gets the flags of this table.
-     *
-     * @return The flags.
+     * Returns the flags of this manifest.
      */
     public int getFlags() {
         return flags;
     }
 
     /**
-     * Gets the format of this table.
-     *
-     * @return The format.
+     * Returns the format of this manifest.
      */
     public int getFormat() {
         return format;
     }
 
     /**
-     * Gets the version of this table.
-     *
-     * @return The version of this table.
+     * Returns the version of this manifest.
      */
     public int getVersion() {
         return version;
@@ -586,34 +490,28 @@ public final class ArchiveManifest {
     }
 
     /**
-     * Removes the folder manifest with the specified id.
+     * Removes the {@link FolderManifest} with the specified id.
      */
     public void removeFolderManifest(int id) {
         folderManifests.remove(id);
     }
 
     /**
-     * Sets the flags of this table.
-     *
-     * @param flags The flags.
+     * Sets the flags of this manifest.
      */
     public void setFlags(int flags) {
         this.flags = flags;
     }
 
     /**
-     * Sets the format of this table.
-     *
-     * @param format The format.
+     * Sets the format of this manifest.
      */
     public void setFormat(int format) {
         this.format = format;
     }
 
     /**
-     * Sets the version of this table.
-     *
-     * @param version The version.
+     * Sets the version of this manifest.
      */
     public void setVersion(int version) {
         this.version = version;
@@ -631,5 +529,35 @@ public final class ArchiveManifest {
      */
     public LabelHashSet getLabels() {
         return labels;
+    }
+
+    /**
+     * Puts the data into a certain type by the format id.
+     *
+     * @param val The value to put into the buffer.
+     * @param os  The stream.
+     * @throws IOException The exception thrown if an i/o error occurs.
+     */
+    public void putSmartFormat(int val, DataOutputStream os) throws IOException {
+        if (format >= 7)
+            putSmartInt(os, val);
+        else
+            os.writeShort((short) val);
+    }
+
+    /**
+     * Puts a smart integer into the stream.
+     *
+     * @param os    The stream.
+     * @param value The value.
+     * @throws IOException The exception thrown if an i/o error occurs.
+     *                     <p>
+     *                     Credits to Graham for this method.
+     */
+    public static void putSmartInt(DataOutputStream os, int value) throws IOException {
+        if ((value & 0xFFFF) < 32768)
+            os.writeShort(value);
+        else
+            os.writeInt(0x80000000 | value);
     }
 }

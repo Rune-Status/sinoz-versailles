@@ -43,10 +43,8 @@ public final class ReleaseManifest {
      * @param buffer
      *            The {@link ByteBuffer} containing the table.
      * @return The decoded {@link ReleaseManifest}.
-     * @throws IOException
-     *             if an I/O error occurs.
      */
-    public static ReleaseManifest decode(ByteBuffer buffer) throws IOException {
+    public static ReleaseManifest decode(ByteBuffer buffer) {
         /* find out how many entries there are and allocate a new table */
         int size = buffer.limit() / 8;
         ReleaseManifest table = new ReleaseManifest(size);
