@@ -7,5 +7,5 @@ import java.time.LocalDate
   * @author Sino
   */
 case class LastLogin(private val value: LocalDate) extends AnyVal {
-  def daysSince(other: LocalDate) = other.until(value).getDays
+  def daysSince(other: LocalDate) = value.until(other).getDays
 }
