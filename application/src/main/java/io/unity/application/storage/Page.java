@@ -26,189 +26,141 @@ import io.unity.application.storage.util.ByteBufferUtils;
 import java.nio.ByteBuffer;
 
 /**
+ * A page is a block of 520 bytes that carries a piece of the whole data.
+ *
  * @author Graham
  * @author `Discardedx2
  * @author Sino
  */
 public final class Page {
+    /**
+     * The size of the header within a page in bytes.
+     */
+    private static final int HEADER_SIZE = 8;
 
-	/**
-	 * The size of the header within a sector in bytes.
-	 */
-	public static final int HEADER_SIZE = 8;
+    /**
+     * The size of the data within a page in bytes.
+     */
+    static final int PAYLOAD_SIZE = 512;
 
-	/**
-	 * The size of the data within a sector in bytes.
-	 */
-	public static final int DATA_SIZE = 512;
+    /**
+     * The total size of a page in bytes.
+     */
+    static final int SIZE = HEADER_SIZE + PAYLOAD_SIZE;
 
-	/**
-	 * The extended data size
-	 */
-	public static final int EXTENDED_DATA_SIZE = 510;
+    /**
+     * Decodes the specified {@link ByteBuffer} into a {@link Page} object.
+     */
+    static Page decode(ByteBuffer buf) {
+        if (buf.remaining() != SIZE)
+            throw new IllegalArgumentException();
 
-	/**
-	 * The extended header size
-	 */
-	public static final int EXTENDED_HEADER_SIZE = 10;
+        int id = buf.getShort() & 0xFFFF;
+        int chunk = buf.getShort() & 0xFFFF;
+        int tail = ByteBufferUtils.getMedium(buf);
+        int type = buf.get() & 0xFF;
+        byte[] data = new byte[PAYLOAD_SIZE];
+        buf.get(data);
 
-	/**
-	 * The total size of a sector in bytes.
-	 */
-	public static final int SIZE = HEADER_SIZE + DATA_SIZE;
+        return new Page(type, id, chunk, tail, data);
+    }
 
-	/**
-	 * Decodes the specified {@link ByteBuffer} into a {@link Page} object.
-	 * 
-	 * @param buf
-	 *            The buffer.
-	 * @return The sector.
-	 */
-	public static Page decode(ByteBuffer buf) {
-		if (buf.remaining() != SIZE)
-			throw new IllegalArgumentException();
+    /**
+     * The type of file this page contains.
+     */
+    private final int type;
 
-		int id = buf.getShort() & 0xFFFF;
-		int chunk = buf.getShort() & 0xFFFF;
-		int nextSector = ByteBufferUtils.getMedium(buf);
-		int type = buf.get() & 0xFF;
-		byte[] data = new byte[DATA_SIZE];
-		buf.get(data);
+    /**
+     * The id of the file this page contains.
+     */
+    private final int id;
 
-		return new Page(type, id, chunk, nextSector, data);
-	}
+    /**
+     * The chunk within the file that this page contains.
+     */
+    private final int chunk;
 
-	/**
-	 * Decodes the specified {@link ByteBuffer} into a {@link Page} object.
-	 * 
-	 * @param buf
-	 *            The buffer.
-	 * @return The sector.
-	 */
-	public static Page decodeExtended(ByteBuffer buf) {
-		if (buf.remaining() != SIZE)
-			throw new IllegalArgumentException();
+    /**
+     * The next page.
+     */
+    private final int tail;
 
-		int id = buf.getInt();
-		int chunk = buf.getShort() & 0xFFFF;
-		int nextSector = ByteBufferUtils.getMedium(buf);
-		int type = buf.get() & 0xFF;
-		byte[] data = new byte[EXTENDED_DATA_SIZE];
-		buf.get(data);
+    /**
+     * The data in this page.
+     */
+    private final byte[] data;
 
-		return new Page(type, id, chunk, nextSector, data);
-	}
+    /**
+     * Creates a new {@link Page}.
+     *
+     * @param type  The type of the file.
+     * @param id    The file's id.
+     * @param chunk The chunk of the file this page contains.
+     * @param tail  The page containing the next chunk.
+     * @param data  The data in this page.
+     */
+    Page(int type, int id, int chunk, int tail, byte[] data) {
+        this.type = type;
+        this.id = id;
+        this.chunk = chunk;
+        this.tail = tail;
+        this.data = data;
+    }
 
-	/**
-	 * The type of file this sector contains.
-	 */
-	private final int type;
+    /**
+     * Encodes this page into a {@link ByteBuffer}.
+     *
+     * @return The encoded buffer.
+     */
+    public ByteBuffer encode() {
+        ByteBuffer buf = ByteBuffer.allocate(SIZE);
+        if (id > 0xFFFF) {
+            buf.putInt(id);
+        } else {
+            buf.putShort((short) id);
+        }
 
-	/**
-	 * The id of the file this sector contains.
-	 */
-	private final int id;
+        buf.putShort((short) chunk);
+        ByteBufferUtils.putMedium(buf, tail);
+        buf.put((byte) type);
+        buf.put(data);
 
-	/**
-	 * The chunk within the file that this sector contains.
-	 */
-	private final int chunk;
+        return (ByteBuffer) buf.flip();
+    }
 
-	/**
-	 * The next sector.
-	 */
-	private final int nextSector;
+    /**
+     * Returns the chunk of the file this page contains.
+     */
+    public int getChunk() {
+        return chunk;
+    }
 
-	/**
-	 * The data in this sector.
-	 */
-	private final byte[] data;
+    /**
+     * Returns this page's data.
+     */
+    public byte[] getData() {
+        return data;
+    }
 
-	/**
-	 * Creates a new sector.
-	 * 
-	 * @param type
-	 *            The type of the file.
-	 * @param id
-	 *            The file's id.
-	 * @param chunk
-	 *            The chunk of the file this sector contains.
-	 * @param nextSector
-	 *            The sector containing the next chunk.
-	 * @param data
-	 *            The data in this sector.
-	 */
-	public Page(int type, int id, int chunk, int nextSector, byte[] data) {
-		this.type = type;
-		this.id = id;
-		this.chunk = chunk;
-		this.nextSector = nextSector;
-		this.data = data;
-	}
+    /**
+     * Returns the id of the file within this page.
+     */
+    public int getId() {
+        return id;
+    }
 
-	/**
-	 * Encodes this sector into a {@link ByteBuffer}.
-	 * 
-	 * @return The encoded buffer.
-	 */
-	public ByteBuffer encode() {
-		ByteBuffer buf = ByteBuffer.allocate(SIZE);
-		if (id > 0xFFFF) {
-			buf.putInt(id);
-		} else {
-			buf.putShort((short) id);
-		}
-		buf.putShort((short) chunk);
-		ByteBufferUtils.putMedium(buf, nextSector);
-		buf.put((byte) type);
-		buf.put(data);
+    /**
+     * Returns the next page.
+     */
+    public int getTail() {
+        return tail;
+    }
 
-		return (ByteBuffer) buf.flip();
-	}
-
-	/**
-	 * Gets the chunk of the file this sector contains.
-	 * 
-	 * @return The chunk of the file this sector contains.
-	 */
-	public int getChunk() {
-		return chunk;
-	}
-
-	/**
-	 * Gets this sector's data.
-	 * 
-	 * @return The data within this sector.
-	 */
-	public byte[] getData() {
-		return data;
-	}
-
-	/**
-	 * Gets the id of the file within this sector.
-	 * 
-	 * @return The id of the file in this sector.
-	 */
-	public int getId() {
-		return id;
-	}
-
-	/**
-	 * Gets the next sector.
-	 * 
-	 * @return The next sector.
-	 */
-	public int getNextSector() {
-		return nextSector;
-	}
-
-	/**
-	 * Gets the type of file in this sector.
-	 * 
-	 * @return The type of file in this sector.
-	 */
-	public int getType() {
-		return type;
-	}
+    /**
+     * Returns the type of file in this page.
+     */
+    public int getType() {
+        return type;
+    }
 
 }

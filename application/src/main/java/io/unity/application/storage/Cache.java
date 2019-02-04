@@ -23,7 +23,6 @@ package io.unity.application.storage;
 
 import io.unity.application.storage.util.ByteBufferUtils;
 import io.unity.application.storage.util.crypto.Djb2;
-import io.unity.application.storage.util.crypto.Whirlpool;
 
 import java.io.Closeable;
 import java.io.FileNotFoundException;
@@ -36,445 +35,394 @@ import java.util.zip.CRC32;
 /**
  * The {@link Cache} class provides a unified, high-level API for modifying the
  * cache of a Jagex game.
- * 
+ *
  * @author Graham
  * @author `Discardedx2
  * @author Sino
  */
 public final class Cache implements Closeable {
-	/**
-	 * The file store that backs this cache.
-	 */
-	private final FileStore store;
+    /**
+     * The file store that backs this cache.
+     */
+    private final FileStore store;
 
-	/**
-	 * The list of reference tables for this cache
-	 */
-	private ArchiveManifest[] references;
+    /**
+     * The collection of {@link ArchiveManifest}s for this cache.
+     */
+    private ArchiveManifest[] archiveManifests;
 
-	/**
-	 * TODO
-	 */
-	private final Map<String, Integer> identifiers = new HashMap<>();
+    /**
+     * TODO
+     */
+    private final Map<String, Integer> identifiers = new HashMap<>();
 
-	/**
-	 * Creates a new {@link Cache} backed by the specified {@link FileStore}.
-	 * 
-	 * @param store
-	 *            The {@link FileStore} that backs this {@link Cache}.
-	 * @throws IOException
-	 */
-	public Cache(FileStore store) throws IOException {
-		this.store = store;
+    /**
+     * Creates a new {@link Cache} backed by the specified {@link FileStore}.
+     *
+     * @param store The {@link FileStore} that backs this {@link Cache}.
+     * @throws IOException
+     */
+    public Cache(FileStore store) throws IOException {
+        this.store = store;
+        this.archiveManifests = new ArchiveManifest[store.getArchiveCount()];
 
-		this.references = new ArchiveManifest[store.getTypeCount()];
-		
-		for (int type = 0; type < store.getTypeCount(); type++) {
-			ByteBuffer buf = store.read(255, type);
-			if (buf.limit() > 0) {
-				references[type] = ArchiveManifest.decode(Container.decode(buf).getData());
-			}
-		}
-	}
+        for (int type = 0; type < store.getArchiveCount(); type++) {
+            ByteBuffer buf = store.readPages(255, type);
+            if (buf.limit() > 0) {
+                archiveManifests[type] = ArchiveManifest.decode(Container.decode(buf).getData());
+            }
+        }
+    }
 
-	@Override
-	public void close() throws IOException {
-		store.close();
-	}
+    @Override
+    public void close() throws IOException {
+        store.close();
+    }
 
-	public final ArchiveManifest getArchiveManifest(int type) {
-		return references[type];
-	}
+    /**
+     * Computes the {@link ReleaseManifest} for this cache. The checksum table
+     * forms part of the so-called "update keys".
+     *
+     * @return The {@link ReleaseManifest}.
+     * @throws IOException if an I/O error occurs.
+     */
+    public ReleaseManifest createReleaseManifest() throws IOException {
+        /* create the checksum table */
+        int size = store.getArchiveCount();
+        ReleaseManifest table = new ReleaseManifest(size);
 
-	public final ArchiveManifest getArchiveManifest(ArchiveType index) {
-		return references[index.getId()];
-	}
-	
-	/**
-	 * Computes the {@link ReleaseManifest} for this cache. The checksum table
-	 * forms part of the so-called "update keys".
-	 * 
-	 * @return The {@link ReleaseManifest}.
-	 * @throws IOException
-	 *             if an I/O error occurs.
-	 */
-	public ReleaseManifest createChecksumTable() throws IOException {
-		/* create the checksum table */
-		int size = store.getTypeCount();
-		ReleaseManifest table = new ReleaseManifest(size);
+        /*
+         * loop through all the archive manifests and get their CRC and versions
+         */
+        for (int i = 0; i < size; i++) {
+            int crc = 0;
+            int version = 0;
 
-		/*
-		 * loop through all the reference tables and get their CRC and versions
-		 */
-		for (int i = 0; i < size; i++) {
-			int crc = 0;
-			int version = 0;
-			int files = 0;
-			int archiveSize = 0;
-			byte[] whirlpool = new byte[64];
+            if (store.hasData()) {
+                /*
+                 * if there is actually an archive manifest, calculate the CRC,
+                 * version and whirlpool hash
+                 */
+                ByteBuffer buf = store.readPages(255, i);
+                if (buf.limit() > 0) {
+                    ArchiveManifest manifest = archiveManifests[i];
 
-			if (store.hasData()) {
-				/*
-				 * if there is actually a reference table, calculate the CRC,
-				 * version and whirlpool hash
-				 */
-				ByteBuffer buf = store.read(255, i);
-				if (buf != null && buf.limit() > 0) {
-					ArchiveManifest ref = references[i];
-					crc = ByteBufferUtils.getCrcChecksum(buf);
-					version = ref.getVersion();
-					files = ref.capacity();
-					archiveSize = ref.getArchiveSize();
-					buf.position(0);
-					whirlpool = ByteBufferUtils.getWhirlpoolDigest(buf);
-				}
-			}
+                    crc = ByteBufferUtils.getCrcChecksum(buf);
+                    version = manifest.getVersion();
 
-			table.setEntry(i, new ReleaseManifest.Entry(crc, version, files, archiveSize, whirlpool));
-		}
+                    buf.position(0);
+                }
+            }
 
-		/* return the table */
-		return table;
-	}
+            table.setEntry(i, new ReleaseManifest.Entry(crc, version));
+        }
 
-	/**
-	 * Gets the number of files of the specified type.
-	 * 
-	 * @param type
-	 *            The type.
-	 * @return The number of files.
-	 * @throws IOException
-	 *             if an I/O error occurs.
-	 */
-	public int getFileCount(int type) throws IOException {
-		return store.getFileCount(type);
-	}
+        /* return the table */
+        return table;
+    }
 
-	/**
-	 * Gets the {@link FileStore} that backs this {@link Cache}.
-	 * 
-	 * @return The underlying file store.
-	 */
-	public FileStore getStore() {
-		return store;
-	}
+    /**
+     * Gets the number of files of the specified type.
+     *
+     * @param type The type.
+     * @return The number of files.
+     * @throws IOException if an I/O error occurs.
+     */
+    public int getFileCount(int type) throws IOException {
+        return store.getFileCount(type);
+    }
 
-	/**
-	 * Gets the number of index files, not including the meta index file.
-	 * 
-	 * @return The number of index files.
-	 * @throws IOException
-	 *             if an I/O error occurs.
-	 */
-	public int getTypeCount() throws IOException {
-		return store.getTypeCount();
-	}
+    /**
+     * Gets the {@link FileStore} that backs this {@link Cache}.
+     *
+     * @return The underlying file store.
+     */
+    public FileStore getStore() {
+        return store;
+    }
 
-	/**
-	 * Reads a file from the cache.
-	 * 
-	 * @param type
-	 *            The type of file.
-	 * @param file
-	 *            The file id.
-	 * @return The file.
-	 * @throws IOException
-	 *             if an I/O error occurred.
-	 */
-	public Container read(ArchiveType index, FolderType archive) throws IOException {
-		return read(index.getId(), archive.getID());
-	}
+    /**
+     * Gets the number of index files, not including the meta index file.
+     *
+     * @return The number of index files.
+     * @throws IOException if an I/O error occurs.
+     */
+    public int getArchiveCount() throws IOException {
+        return store.getArchiveCount();
+    }
 
-	/**
-	 * Reads a file from the cache.
-	 * 
-	 * @param type
-	 *            The type of file.
-	 * @param file
-	 *            The file id.
-	 * @return The file.
-	 * @throws IOException
-	 *             if an I/O error occurred.
-	 */
-	public Container read(ArchiveType index, int file) throws IOException {
-		return read(index.getId(), file);
-	}
+    /**
+     * Reads a file from the cache.
+     *
+     * @param archiveType The type of file.
+     * @param folderType The file id.
+     * @return The file.
+     * @throws IOException if an I/O error occurred.
+     */
+    public Container read(ArchiveType archiveType, FolderType folderType) throws IOException {
+        return read(archiveType.getId(), folderType.getId());
+    }
 
-	/**
-	 * Reads a file from the cache.
-	 * 
-	 * @param type
-	 *            The type of file.
-	 * @param file
-	 *            The file id.
-	 * @return The file.
-	 * @throws IOException
-	 *             if an I/O error occurred.
-	 */
-	public Container read(int type, int file) throws IOException {
-		/* we don't want people reading/manipulating these manually */
-		if (type == 255)
-			throw new IOException("Reference tables can only be read with the low level FileStore API!");
+    /**
+     * Reads a file from the cache.
+     *
+     * @param archiveType The type of file.
+     * @param folderId The file id.
+     * @return The file.
+     * @throws IOException if an I/O error occurred.
+     */
+    public Container read(ArchiveType archiveType, int folderId) throws IOException {
+        return read(archiveType.getId(), folderId);
+    }
 
-		/* delegate the call to the file store then decode the container */
-		return Container.decode(store.read(type, file));
-	}
+    /**
+     * Reads a file from the cache.
+     *
+     * @param archiveId The type of file.
+     * @param folderId The file id.
+     * @return The file.
+     * @throws IOException if an I/O error occurred.
+     */
+    public Container read(int archiveId, int folderId) throws IOException {
+        /* we don't want people reading/manipulating these manually */
+        if (archiveId == 255) {
+            throw new IOException("Archive manifests can only be read with the low level FileStore API!");
+        }
 
-	/**
-	 * Reads a file from the cache.
-	 * 
-	 * @param type
-	 *            The type of file.
-	 * @param file
-	 *            The file id.
-	 * @param keys
-	 *            The decryption keys.
-	 * @return The file.
-	 * @throws IOException
-	 *             if an I/O error occurred.
-	 */
-	public Container read(int type, int file, int[] keys) throws IOException {
-		/* we don't want people reading/manipulating these manually */
-		if (type == 255)
-			throw new IOException("Reference tables can only be read with the low level FileStore API!");
+        /* delegate the call to the file store then decode the container */
+        return Container.decode(store.readPages(archiveId, folderId));
+    }
 
-		/* delegate the call to the file store then decode the container */
-		return Container.decode(store.read(type, file), keys);
-	}
+    /**
+     * Reads a file from the cache.
+     *
+     * @param archiveId The type of file.
+     * @param folderId The file id.
+     * @param keySet The decryption keys.
+     * @return The file.
+     * @throws IOException if an I/O error occurred.
+     */
+    public Container read(int archiveId, int folderId, int[] keySet) throws IOException {
+        /* we don't want people reading/manipulating these manually */
+        if (archiveId == 255) {
+            throw new IOException("Archive manifests can only be read with the low level FileStore API!");
+        }
 
-	/**
-	 * Reads a file contained in an archive in the cache.
-	 * 
-	 * @param type
-	 *            The type of the file.
-	 * @param file
-	 *            The archive id.
-	 * @param file
-	 *            The file within the archive.
-	 * @return The file.
-	 * @throws IOException
-	 *             if an I/O error occurred.
-	 */
-	public ByteBuffer read(int type, int file, int member) throws IOException {
-		/* grab the container and the reference table */
-		Container container = read(type, file);
-		Container tableContainer = Container.decode(store.read(255, type));
-		ArchiveManifest table = ArchiveManifest.decode(tableContainer.getData());
+        /* delegate the call to the file store then decode the container */
+        return Container.decode(store.readPages(archiveId, folderId), keySet);
+    }
 
-		/* check if the file/member are valid */
-		ArchiveManifest.FolderManifest entry = table.getEntry(file);
-		if (entry == null || member < 0 || member >= entry.capacity())
-			throw new FileNotFoundException();
+    /**
+     * Reads a file contained in an archive in the cache.
+     *
+     * @param archiveId The type of the file.
+     * @param folderId The archive id.
+     * @param packId The file within the archive.
+     * @return The file.
+     * @throws IOException if an I/O error occurred.
+     */
+    public ByteBuffer read(int archiveId, int folderId, int packId) throws IOException {
+        /* grab the container and the archive manifest */
+        Container container = read(archiveId, folderId);
+        Container tableContainer = Container.decode(store.readPages(255, archiveId));
+        ArchiveManifest archiveManifest = ArchiveManifest.decode(tableContainer.getData());
 
-		/* extract the entry from the archive */
-		Folder archive = Folder.decode(container.getData(), entry.capacity());
-		return archive.getEntry(member);
-	}
+        /* check if the folder/pack are valid */
+        ArchiveManifest.FolderManifest folderManifest = archiveManifest.getFolderManifest(folderId);
+        if (folderManifest == null || packId < 0 || packId >= folderManifest.capacity())
+            throw new FileNotFoundException();
 
-	/**
-	 * Gets a file id from the cache by name
-	 * 
-	 * @param type
-	 *            The type of file.
-	 * @param name
-	 *            The name of the file
-	 * @return The file id.
-	 * @throws IOException
-	 */
-	public int getFileId(int type, String name) throws IOException {
-		if (!identifiers.containsKey(name)) {
-			ArchiveManifest table = references[type];
-			identifiers.put(name, table.getIdentifiers().getFile(Djb2.hash(name)));
-		}
-		
-		Integer i = identifiers.get(name);
-		return i == null ? -1 : i.intValue();
-	}
+        /* extract the pack from the folder */
+        Folder folder = Folder.decode(container.getData(), folderManifest.capacity());
+        return folder.getPack(packId);
+    }
 
-	/**
-	 * Writes a file to the cache and updates the {@link ArchiveManifest} that it
-	 * is associated with.
-	 * 
-	 * @param type
-	 *            The type of file.
-	 * @param file
-	 *            The file id.
-	 * @param container
-	 *            The {@link Container} to write.
-	 * @throws IOException
-	 *             if an I/O error occurs.
-	 */
-	public void write(int type, int file, Container container) throws IOException {
-		write(type, file, container, new int[4]);
-	}
-	
-	/**
-	 * Writes a file to the cache and updates the {@link ArchiveManifest} that it
-	 * is associated with.
-	 * 
-	 * @param type
-	 *            The type of file.
-	 * @param file
-	 *            The file id.
-	 * @param container
-	 *            The {@link Container} to write.
-	 * @param keys
-	 *            The encryption keys.
-	 * @throws IOException
-	 *             if an I/O error occurs.
-	 */
-	public void write(int type, int file, Container container, int[] keys) throws IOException {
-		/* we don't want people reading/manipulating these manually */
-		if (type == 255)
-			throw new IOException("Reference tables can only be modified with the low level FileStore API!");
+    public final ArchiveManifest getArchiveManifest(int type) {
+        return archiveManifests[type];
+    }
 
-		/* increment the container's version */
-		container.setVersion(container.getVersion()/* + 1 */);
+    public final ArchiveManifest getArchiveManifest(ArchiveType index) {
+        return archiveManifests[index.getId()];
+    }
 
-		/* decode the reference table for this index */
-		Container tableContainer = Container.decode(store.read(255, type));
-		ArchiveManifest table = ArchiveManifest.decode(tableContainer.getData());
+    /**
+     * Gets a file id from the cache by name
+     *
+     * @param type The type of file.
+     * @param name The name of the file
+     * @return The file id.
+     * @throws IOException
+     */
+    public int getFileId(int type, String name) throws IOException {
+        if (!identifiers.containsKey(name)) {
+            ArchiveManifest table = archiveManifests[type];
+            identifiers.put(name, table.getLabels().getFile(Djb2.hash(name)));
+        }
 
-		/* grab the bytes we need for the checksum */
-		ByteBuffer buffer = container.encode(keys);
-		
-		/* last two bytes are the version and shouldn't be included */
-		byte[] bytes = new byte[buffer.limit() - 2];
-		buffer.mark();
-		try {
-			buffer.position(0);
-			buffer.get(bytes, 0, bytes.length);
-		} finally {
-			buffer.reset();
-		}
+        Integer i = identifiers.get(name);
+        return i == null ? -1 : i.intValue();
+    }
 
-		/* calculate the new CRC checksum */
-		CRC32 crc = new CRC32();
-		crc.update(bytes, 0, bytes.length);
+    /**
+     * Writes a file to the cache and updates the {@link ArchiveManifest} that it
+     * is associated with.
+     *
+     * @param archiveId      The type of file.
+     * @param folderId      The file id.
+     * @param container The {@link Container} to write.
+     * @throws IOException if an I/O error occurs.
+     */
+    public void write(int archiveId, int folderId, Container container) throws IOException {
+        write(archiveId, folderId, container, new int[4]);
+    }
 
-		/* update the version and checksum for this file */
-		ArchiveManifest.FolderManifest entry = table.getEntry(file);
-		if (entry == null) {
-			/* create a new entry for the file */
-			entry = new ArchiveManifest.FolderManifest(file);
-			table.putEntry(file, entry);
-		}
-		entry.setVersion(container.getVersion());
-		entry.setCrc((int) crc.getValue());
+    /**
+     * Writes a file to the cache and updates the {@link ArchiveManifest} that it
+     * is associated with.
+     *
+     * @param archiveId      The type of file.
+     * @param folderId      The file id.
+     * @param container The {@link Container} to write.
+     * @param keySet      The encryption keys.
+     * @throws IOException if an I/O error occurs.
+     */
+    public void write(int archiveId, int folderId, Container container, int[] keySet) throws IOException {
+        /* we don't want people reading/manipulating these manually */
+        if (archiveId == 255) {
+            throw new IOException("Archive manifests can only be modified with the low level FileStore API!");
+        }
 
-		/* calculate and update the whirlpool digest if we need to */
-		if ((table.getFlags() & ArchiveManifest.FLAG_WHIRLPOOL) != 0) {
-			byte[] whirlpool = Whirlpool.whirlpool(bytes, 0, bytes.length);
-			entry.setWhirlpool(whirlpool);
-		}
+        /* increment the container's version */
+        container.setVersion(container.getVersion()/* + 1 */);
 
-		/* update the reference table version */
-		table.setVersion(table.getVersion()/* + 1 */);
+        /* decode the manifest for the specified archive. */
+        Container manifestContainer = Container.decode(store.readPages(255, archiveId));
+        ArchiveManifest archiveManifest = ArchiveManifest.decode(manifestContainer.getData());
 
-		/* save the reference table */
-		tableContainer = new Container(tableContainer.getType(), table.encode());
-		store.write(255, type, tableContainer.encode());
+        /* grab the bytes we need for the checksum */
+        ByteBuffer buffer = container.encode(keySet);
 
-		/* save the file itself */
-		store.write(type, file, buffer);
-	}
-	
-	/**
-	 * Writes a file contained in an archive to the cache.
-	 * 
-	 * @param type
-	 *            The type of file.
-	 * @param file
-	 *            The id of the archive.
-	 * @param member
-	 *            The file within the archive.
-	 * @param data
-	 *            The data to write.
-	 * @throws IOException
-	 *             if an I/O error occurs.
-	 */
-	public void write(int type, int file, int member, ByteBuffer data) throws IOException {
-		write(type, file, member, data, new int[4]);
-	}
+        /* last two bytes are the version and shouldn't be included */
+        byte[] bytes = new byte[buffer.limit() - 2];
+        buffer.mark();
+        try {
+            buffer.position(0);
+            buffer.get(bytes, 0, bytes.length);
+        } finally {
+            buffer.reset();
+        }
 
-	/**
-	 * Writes a file contained in an archive to the cache.
-	 * 
-	 * @param type
-	 *            The type of file.
-	 * @param file
-	 *            The id of the archive.
-	 * @param member
-	 *            The file within the archive.
-	 * @param data
-	 *            The data to write.
-	 * @param keys
-	 *            The encryption keys.
-	 * @throws IOException
-	 *             if an I/O error occurs.
-	 */
-	public void write(int type, int file, int member, ByteBuffer data, int[] keys) throws IOException {
-		/* grab the reference table */
-		Container tableContainer = Container.decode(store.read(255, type));
-		ArchiveManifest table = ArchiveManifest.decode(tableContainer.getData());
+        /* calculate the new CRC checksum */
+        CRC32 crc = new CRC32();
+        crc.update(bytes, 0, bytes.length);
 
-		/* create a new entry if necessary */
-		ArchiveManifest.FolderManifest entry = table.getEntry(file);
-		int oldArchiveSize = -1;
-		if (entry == null) {
-			entry = new ArchiveManifest.FolderManifest(file);
-			table.putEntry(file, entry);
-		} else {
-			oldArchiveSize = entry.capacity();
-		}
+        /* update the version and checksum for this file */
+        ArchiveManifest.FolderManifest folderManifest = archiveManifest.getFolderManifest(folderId);
+        if (folderManifest == null) {
+            /* create a new entry for the file */
+            folderManifest = new ArchiveManifest.FolderManifest(folderId);
+            archiveManifest.putFolderManifest(folderId, folderManifest);
+        }
 
-		/* add a child entry if one does not exist */
-		ArchiveManifest.PackManifest child = entry.getEntry(member);
-		if (child == null) {
-			child = new ArchiveManifest.PackManifest(member);
-			entry.putEntry(member, child);
-		}
+        folderManifest.setVersion(container.getVersion());
+        folderManifest.setCrc((int) crc.getValue());
 
-		/* extract the current archive into memory so we can modify it */
-		Folder archive;
-		int containerType, containerVersion;
-		if (file < store.getFileCount(type) && oldArchiveSize != -1) {
-			Container container = read(type, file);
-			containerType = container.getType();
-			containerVersion = container.getVersion();
-			archive = Folder.decode(container.getData(), oldArchiveSize);
-		} else {
-			containerType = Container.COMPRESSION_GZIP;
-			containerVersion = 1;
-			archive = new Folder(member + 1);
-		}
+        /* update the version of the archive manifest */
+        archiveManifest.setVersion(archiveManifest.getVersion()/* + 1 */);
 
-		/* expand the archive if it is not large enough */
-		if (member >= archive.size()) {
-			Folder newArchive = new Folder(member + 1);
-			for (int id = 0; id < archive.size(); id++) {
-				newArchive.putEntry(id, archive.getEntry(id));
-			}
-			archive = newArchive;
-		}
+        /* save the archive manifest */
+        manifestContainer = new Container(manifestContainer.getType(), archiveManifest.encode());
+        store.writePages(255, archiveId, manifestContainer.encode());
 
-		/* put the member into the archive */
-		archive.putEntry(member, data);
+        /* save the file itself */
+        store.writePages(archiveId, folderId, buffer);
+    }
 
-		/* create 'dummy' entries */
-		for (int id = 0; id < archive.size(); id++) {
-			if (archive.getEntry(id) == null) {
-				entry.putEntry(id, new ArchiveManifest.PackManifest(id));
-				archive.putEntry(id, ByteBuffer.allocate(1));
-			}
-		}
+    /**
+     * Writes a file contained in an archive to the cache.
+     *
+     * @param archive   The type of file.
+     * @param folder   The id of the archive.
+     * @param pack The file within the archive.
+     * @param data   The data to write.
+     * @throws IOException if an I/O error occurs.
+     */
+    public void write(int archive, int folder, int pack, ByteBuffer data) throws IOException {
+        write(archive, folder, pack, data, new int[4]);
+    }
 
-		/* write the reference table out again */
-		tableContainer = new Container(tableContainer.getType(), table.encode());
-		store.write(255, type, tableContainer.encode());
+    /**
+     * Writes a file contained in an archive to the cache.
+     *
+     * @param archiveId   The type of file.
+     * @param folderId   The id of the archive.
+     * @param packId The file within the archive.
+     * @param data   The data to write.
+     * @param keySet   The encryption keys.
+     * @throws IOException if an I/O error occurs.
+     */
+    public void write(int archiveId, int folderId, int packId, ByteBuffer data, int[] keySet) throws IOException {
+        /* grab the archive manifests */
+        Container manifestContainer = Container.decode(store.readPages(255, archiveId));
+        ArchiveManifest archiveManifest = ArchiveManifest.decode(manifestContainer.getData());
 
-		/* and write the archive back to memory */
-		Container container = new Container(containerType, archive.encode(), containerVersion);
-		write(type, file, container, keys);
-	}
+        /* create a new entry if necessary */
+        ArchiveManifest.FolderManifest folderManifest = archiveManifest.getFolderManifest(folderId);
+        int oldArchiveSize = -1;
+        if (folderManifest == null) {
+            folderManifest = new ArchiveManifest.FolderManifest(folderId);
+            archiveManifest.putFolderManifest(folderId, folderManifest);
+        } else {
+            oldArchiveSize = folderManifest.capacity();
+        }
+
+        /* add a pack manifest if one does not exist */
+        ArchiveManifest.PackManifest packManifest = folderManifest.getPackManifest(packId);
+        if (packManifest == null) {
+            packManifest = new ArchiveManifest.PackManifest(packId);
+            folderManifest.putEntry(packId, packManifest);
+        }
+
+        /* extract the current folder into memory so we can modify it */
+        Folder folder;
+        int containerType, containerVersion;
+        if (folderId < store.getFileCount(archiveId) && oldArchiveSize != -1) {
+            Container container = read(archiveId, folderId);
+            containerType = container.getType();
+            containerVersion = container.getVersion();
+            folder = Folder.decode(container.getData(), oldArchiveSize);
+        } else {
+            containerType = Container.COMPRESSION_GZIP;
+            containerVersion = 1;
+            folder = new Folder(packId + 1);
+        }
+
+        /* expand the folder if it is not large enough */
+        if (packId >= folder.size()) {
+            Folder newFolder = new Folder(packId + 1);
+            for (int id = 0; id < folder.size(); id++) {
+                newFolder.putPack(id, folder.getPack(id));
+            }
+            folder = newFolder;
+        }
+
+        /* put the pack into the folder */
+        folder.putPack(packId, data);
+
+        /* create 'dummy' packs */
+        for (int id = 0; id < folder.size(); id++) {
+            if (folder.getPack(id) == null) {
+                folderManifest.putEntry(id, new ArchiveManifest.PackManifest(id));
+                folder.putPack(id, ByteBuffer.allocate(1));
+            }
+        }
+
+        /* write the archive manifest out again */
+        manifestContainer = new Container(manifestContainer.getType(), archiveManifest.encode());
+        store.writePages(255, archiveId, manifestContainer.encode());
+
+        /* and write the folder back to memory */
+        Container container = new Container(containerType, folder.encode(), containerVersion);
+        write(archiveId, folderId, container, keySet);
+    }
 }

@@ -127,15 +127,14 @@ import java.io.OutputStream;
  * <p>
  * TODO: Update to BZip2 1.0.1
  * </p>
- * 
+ *
  * <p>
  * <strong>This class has been modified so it does not use randomized blocks as
  * these are not supported by the client's bzip2 implementation.</strong>
- * </p> 
- *
+ * </p>
  */
 public class CBZip2OutputStream extends OutputStream
-    implements BZip2Constants {
+        implements BZip2Constants {
 
     private static final class Data extends Object {
 
@@ -275,25 +274,23 @@ public class CBZip2OutputStream extends OutputStream
      * Possibly because the number of elems to sort is usually small, typically
      * &lt;= 20.
      */
-    private static final int[] INCS = { 1, 4, 13, 40, 121, 364, 1093, 3280,
-                                        9841, 29524, 88573, 265720, 797161,
-                                        2391484 };
+    private static final int[] INCS = {1, 4, 13, 40, 121, 364, 1093, 3280,
+            9841, 29524, 88573, 265720, 797161,
+            2391484};
 
     /**
      * Chooses a blocksize based on the given length of the data to compress.
      *
+     * @param inputLength The length of the data which will be compressed by
+     *                    <tt>CBZip2OutputStream</tt>.
      * @return The blocksize, between {@link #MIN_BLOCKSIZE} and
-     *         {@link #MAX_BLOCKSIZE} both inclusive. For a negative
-     *         <tt>inputLength</tt> this method returns <tt>MAX_BLOCKSIZE</tt>
-     *         always.
-     *
-     * @param inputLength
-     *            The length of the data which will be compressed by
-     *            <tt>CBZip2OutputStream</tt>.
+     * {@link #MAX_BLOCKSIZE} both inclusive. For a negative
+     * <tt>inputLength</tt> this method returns <tt>MAX_BLOCKSIZE</tt>
+     * always.
      */
     public static int chooseBlockSize(long inputLength) {
         return (inputLength > 0) ? (int) Math
-            .min((inputLength / 132000) + 1, 9) : MAX_BLOCKSIZE;
+                .min((inputLength / 132000) + 1, 9) : MAX_BLOCKSIZE;
     }
 
     private static void hbAssignCodes(final int[] code, final byte[] length,
@@ -322,11 +319,11 @@ public class CBZip2OutputStream extends OutputStream
         final int[] weight = dat.weight;
         final int[] parent = dat.parent;
 
-        for (int i = alphaSize; --i >= 0;) {
+        for (int i = alphaSize; --i >= 0; ) {
             weight[i + 1] = (freq[i] == 0 ? 1 : freq[i]) << 8;
         }
 
-        for (boolean tooLong = true; tooLong;) {
+        for (boolean tooLong = true; tooLong; ) {
             tooLong = false;
 
             int nNodes = alphaSize;
@@ -366,7 +363,7 @@ public class CBZip2OutputStream extends OutputStream
                     }
 
                     if ((yy < nHeap)
-                        && (weight[heap[yy + 1]] < weight[heap[yy]])) {
+                            && (weight[heap[yy + 1]] < weight[heap[yy]])) {
                         yy++;
                     }
 
@@ -396,7 +393,7 @@ public class CBZip2OutputStream extends OutputStream
                     }
 
                     if ((yy < nHeap)
-                        && (weight[heap[yy + 1]] < weight[heap[yy]])) {
+                            && (weight[heap[yy + 1]] < weight[heap[yy]])) {
                         yy++;
                     }
 
@@ -415,11 +412,11 @@ public class CBZip2OutputStream extends OutputStream
                 final int weight_n1 = weight[n1];
                 final int weight_n2 = weight[n2];
                 weight[nNodes] = ((weight_n1 & 0xffffff00)
-                                  + (weight_n2 & 0xffffff00))
-                    | (1 + (((weight_n1 & 0x000000ff)
-                             > (weight_n2 & 0x000000ff))
-                            ? (weight_n1 & 0x000000ff)
-                            : (weight_n2 & 0x000000ff)));
+                        + (weight_n2 & 0xffffff00))
+                        | (1 + (((weight_n1 & 0x000000ff)
+                        > (weight_n2 & 0x000000ff))
+                        ? (weight_n1 & 0x000000ff)
+                        : (weight_n2 & 0x000000ff)));
 
                 parent[nNodes] = -1;
                 nHeap++;
@@ -441,7 +438,7 @@ public class CBZip2OutputStream extends OutputStream
                 int j = 0;
                 int k = i;
 
-                for (int parent_k; (parent_k = parent[k]) >= 0;) {
+                for (int parent_k; (parent_k = parent[k]) >= 0; ) {
                     k = parent_k;
                     j++;
                 }
@@ -477,11 +474,11 @@ public class CBZip2OutputStream extends OutputStream
         final int[] weight = new int[MAX_ALPHA_SIZE * 2];
         final int[] parent = new int[MAX_ALPHA_SIZE * 2];
 
-        for (int i = alphaSize; --i >= 0;) {
+        for (int i = alphaSize; --i >= 0; ) {
             weight[i + 1] = (freq[i] == 0 ? 1 : freq[i]) << 8;
         }
 
-        for (boolean tooLong = true; tooLong;) {
+        for (boolean tooLong = true; tooLong; ) {
             tooLong = false;
 
             int nNodes = alphaSize;
@@ -523,7 +520,7 @@ public class CBZip2OutputStream extends OutputStream
                     }
 
                     if ((yy < nHeap)
-                        && (weight[heap[yy + 1]] < weight[heap[yy]])) {
+                            && (weight[heap[yy + 1]] < weight[heap[yy]])) {
                         yy++;
                     }
 
@@ -553,7 +550,7 @@ public class CBZip2OutputStream extends OutputStream
                     }
 
                     if ((yy < nHeap)
-                        && (weight[heap[yy + 1]] < weight[heap[yy]])) {
+                            && (weight[heap[yy + 1]] < weight[heap[yy]])) {
                         yy++;
                     }
 
@@ -572,13 +569,13 @@ public class CBZip2OutputStream extends OutputStream
                 final int weight_n1 = weight[n1];
                 final int weight_n2 = weight[n2];
                 weight[nNodes] = (((weight_n1 & 0xffffff00)
-                                   + (weight_n2 & 0xffffff00))
-                                  |
-                                  (1 + (((weight_n1 & 0x000000ff)
-                                         > (weight_n2 & 0x000000ff))
-                                        ? (weight_n1 & 0x000000ff)
-                                        : (weight_n2 & 0x000000ff))
-                                   ));
+                        + (weight_n2 & 0xffffff00))
+                        |
+                        (1 + (((weight_n1 & 0x000000ff)
+                                > (weight_n2 & 0x000000ff))
+                                ? (weight_n1 & 0x000000ff)
+                                : (weight_n2 & 0x000000ff))
+                        ));
 
                 parent[nNodes] = -1;
                 nHeap++;
@@ -602,7 +599,7 @@ public class CBZip2OutputStream extends OutputStream
                 int j = 0;
                 int k = i;
 
-                for (int parent_k; (parent_k = parent[k]) >= 0;) {
+                for (int parent_k; (parent_k = parent[k]) >= 0; ) {
                     k = parent_k;
                     j++;
                 }
@@ -625,7 +622,7 @@ public class CBZip2OutputStream extends OutputStream
 
     private static byte med3(byte a, byte b, byte c) {
         return (a < b) ? (b < c ? b : a < c ? c : a) : (b > c ? b : a > c ? c
-                                                        : a);
+                : a);
     }
 
     private static void vswap(int[] fmap, int p1, int p2, int n) {
@@ -636,6 +633,7 @@ public class CBZip2OutputStream extends OutputStream
             fmap[p2++] = t;
         }
     }
+
     /**
      * Index of the last char in the block, so the block size == last + 1.
      */
@@ -696,11 +694,8 @@ public class CBZip2OutputStream extends OutputStream
      *
      * @param out *
      *            the destination stream.
-     *
-     * @throws IOException
-     *             if an I/O error occurs in the specified stream.
-     * @throws NullPointerException
-     *             if <code>out == null</code>.
+     * @throws IOException          if an I/O error occurs in the specified stream.
+     * @throws NullPointerException if <code>out == null</code>.
      */
     public CBZip2OutputStream(final OutputStream out) throws IOException {
         this(out, MAX_BLOCKSIZE);
@@ -716,33 +711,25 @@ public class CBZip2OutputStream extends OutputStream
      * constructor.
      * </p>
      *
-     *
-     * @param out
-     *            the destination stream.
-     * @param blockSize
-     *            the blockSize as 100k units.
-     *
-     * @throws IOException
-     *             if an I/O error occurs in the specified stream.
-     * @throws IllegalArgumentException
-     *             if <code>(blockSize < 1) || (blockSize > 9)</code>.
-     * @throws NullPointerException
-     *             if <code>out == null</code>.
-     *
+     * @param out       the destination stream.
+     * @param blockSize the blockSize as 100k units.
+     * @throws IOException              if an I/O error occurs in the specified stream.
+     * @throws IllegalArgumentException if <code>(blockSize < 1) || (blockSize > 9)</code>.
+     * @throws NullPointerException     if <code>out == null</code>.
      * @see #MIN_BLOCKSIZE
      * @see #MAX_BLOCKSIZE
      */
     public CBZip2OutputStream(final OutputStream out, final int blockSize)
-        throws IOException {
+            throws IOException {
         super();
 
         if (blockSize < 1) {
             throw new IllegalArgumentException("blockSize(" + blockSize
-                                               + ") < 1");
+                    + ") < 1");
         }
         if (blockSize > 9) {
             throw new IllegalArgumentException("blockSize(" + blockSize
-                                               + ") > 9");
+                    + ") > 9");
         }
 
         this.blockSize100k = blockSize;
@@ -940,7 +927,7 @@ public class CBZip2OutputStream extends OutputStream
             mtfFreq[i] = 0;
         }
 
-        for (int i = nInUseShadow; --i >= 0;) {
+        for (int i = nInUseShadow; --i >= 0; ) {
             yy[i] = (byte) i;
         }
 
@@ -1048,7 +1035,7 @@ public class CBZip2OutputStream extends OutputStream
         // ch = 0;
 
         boolean[] inUse = this.data.inUse;
-        for (int i = 256; --i >= 0;) {
+        for (int i = 256; --i >= 0; ) {
             inUse[i] = false;
         }
 
@@ -1071,7 +1058,7 @@ public class CBZip2OutputStream extends OutputStream
         stack_hh[0] = hiSt;
         stack_dd[0] = dSt;
 
-        for (int sp = 1; --sp >= 0;) {
+        for (int sp = 1; --sp >= 0; ) {
             final int lo = stack_ll[sp];
             final int hi = stack_hh[sp];
             final int d = stack_dd[sp];
@@ -1083,7 +1070,7 @@ public class CBZip2OutputStream extends OutputStream
             } else {
                 final int d1 = d + 1;
                 final int med = med3(block[fmap[lo] + d1],
-                                     block[fmap[hi] + d1], block[fmap[(lo + hi) >>> 1] + d1]) & 0xff;
+                        block[fmap[hi] + d1], block[fmap[(lo + hi) >>> 1] + d1]) & 0xff;
 
                 int unLo = lo;
                 int unHi = hi;
@@ -1093,7 +1080,7 @@ public class CBZip2OutputStream extends OutputStream
                 while (true) {
                     while (unLo <= unHi) {
                         final int n = ((int) block[fmap[unLo] + d1] & 0xff)
-                            - med;
+                                - med;
                         if (n == 0) {
                             final int temp = fmap[unLo];
                             fmap[unLo++] = fmap[ltLo];
@@ -1107,7 +1094,7 @@ public class CBZip2OutputStream extends OutputStream
 
                     while (unLo <= unHi) {
                         final int n = ((int) block[fmap[unHi] + d1] & 0xff)
-                            - med;
+                                - med;
                         if (n == 0) {
                             final int temp = fmap[unHi];
                             fmap[unHi--] = fmap[gtHi];
@@ -1135,10 +1122,10 @@ public class CBZip2OutputStream extends OutputStream
                     sp++;
                 } else {
                     int n = ((ltLo - lo) < (unLo - ltLo)) ? (ltLo - lo)
-                        : (unLo - ltLo);
+                            : (unLo - ltLo);
                     vswap(fmap, lo, unLo - n, n);
                     int m = ((hi - gtHi) < (gtHi - unHi)) ? (hi - gtHi)
-                        : (gtHi - unHi);
+                            : (gtHi - unHi);
                     vswap(fmap, unLo, hi - m + 1, m);
 
                     n = lo + unLo - ltLo - 1;
@@ -1197,11 +1184,12 @@ public class CBZip2OutputStream extends OutputStream
         // Following block contains unrolled code which could be shortened by
         // coding it in additional loops.
 
-        HP: while (--hp >= 0) {
+        HP:
+        while (--hp >= 0) {
             final int h = INCS[hp];
             final int mj = lo + h - 1;
 
-            for (int i = lo + h; i <= hi;) {
+            for (int i = lo + h; i <= hi; ) {
                 // copy
                 for (int k = 3; (i <= hi) && (--k >= 0); i++) {
                     final int v = fmap[i];
@@ -1221,7 +1209,8 @@ public class CBZip2OutputStream extends OutputStream
                     boolean onceRunned = false;
                     int a = 0;
 
-                    HAMMER: while (true) {
+                    HAMMER:
+                    while (true) {
                         if (onceRunned) {
                             fmap[j] = a;
                             if ((j -= h) <= mj) {
@@ -1244,7 +1233,8 @@ public class CBZip2OutputStream extends OutputStream
                                         if (block[i1 + 5] == block[i2 + 5]) {
                                             if (block[(i1 += 6)] == block[(i2 += 6)]) {
                                                 int x = lastShadow;
-                                                X: while (x > 0) {
+                                                X:
+                                                while (x > 0) {
                                                     x -= 4;
 
                                                     if (block[i1 + 1] == block[i2 + 1]) {
@@ -1347,7 +1337,7 @@ public class CBZip2OutputStream extends OutputStream
                 }
 
                 if (firstAttemptShadow && (i <= hi)
-                    && (workDoneShadow > workLimitShadow)) {
+                        && (workDoneShadow > workLimitShadow)) {
                     break HP;
                 }
             }
@@ -1371,7 +1361,7 @@ public class CBZip2OutputStream extends OutputStream
         final boolean firstAttemptShadow = this.firstAttempt;
 
         // Set up the 2-byte frequency table
-        for (int i = 65537; --i >= 0;) {
+        for (int i = 65537; --i >= 0; ) {
             ftab[i] = 0;
         }
 
@@ -1383,7 +1373,7 @@ public class CBZip2OutputStream extends OutputStream
         for (int i = 0; i < NUM_OVERSHOOT_BYTES; i++) {
             block[lastShadow + i + 2] = block[(i % (lastShadow + 1)) + 1];
         }
-        for (int i = lastShadow + NUM_OVERSHOOT_BYTES +1; --i >= 0;) {
+        for (int i = lastShadow + NUM_OVERSHOOT_BYTES + 1; --i >= 0; ) {
             quadrant[i] = 0;
         }
         block[0] = block[lastShadow + 1];
@@ -1413,12 +1403,12 @@ public class CBZip2OutputStream extends OutputStream
          * Now ftab contains the first loc of every small bucket. Calculate the
          * running order, from smallest to largest big bucket.
          */
-        for (int i = 256; --i >= 0;) {
+        for (int i = 256; --i >= 0; ) {
             bigDone[i] = false;
             runningOrder[i] = i;
         }
 
-        for (int h = 364; h != 1;) {
+        for (int h = 364; h != 1; ) {
             h /= 3;
             for (int i = h; i <= 255; i++) {
                 final int vv = runningOrder[i];
@@ -1426,7 +1416,7 @@ public class CBZip2OutputStream extends OutputStream
                 final int b = h - 1;
                 int j = i;
                 for (int ro = runningOrder[j - h]; (ftab[(ro + 1) << 8] - ftab[ro << 8]) > a; ro = runningOrder[j
-                                                                                                                - h]) {
+                        - h]) {
                     runningOrder[j] = ro;
                     j -= h;
                     if (j <= b) {
@@ -1462,7 +1452,7 @@ public class CBZip2OutputStream extends OutputStream
                     if (hi > lo) {
                         mainQSort3(dataShadow, lo, hi, 2);
                         if (firstAttemptShadow
-                            && (this.workDone > workLimitShadow)) {
+                                && (this.workDone > workLimitShadow)) {
                             return;
                         }
                     }
@@ -1487,7 +1477,7 @@ public class CBZip2OutputStream extends OutputStream
                 }
             }
 
-            for (int j = 256; --j >= 0;)
+            for (int j = 256; --j >= 0; )
                 ftab[(j << 8) + ss] |= SETMASK;
 
             // Step 3:
@@ -1529,12 +1519,12 @@ public class CBZip2OutputStream extends OutputStream
     }
 
     @SuppressWarnings("unused")
-	private void randomiseBlock() {
+    private void randomiseBlock() {
         final boolean[] inUse = this.data.inUse;
         final byte[] block = this.data.block;
         final int lastShadow = this.last;
 
-        for (int i = 256; --i >= 0;)
+        for (int i = 256; --i >= 0; )
             inUse[i] = false;
 
         int rNToGo = 0;
@@ -1561,9 +1551,9 @@ public class CBZip2OutputStream extends OutputStream
         final byte[][] len = this.data.sendMTFValues_len;
         final int alphaSize = this.nInUse + 2;
 
-        for (int t = N_GROUPS; --t >= 0;) {
+        for (int t = N_GROUPS; --t >= 0; ) {
             byte[] len_t = len[t];
-            for (int v = alphaSize; --v >= 0;) {
+            for (int v = alphaSize; --v >= 0; ) {
                 len_t[v] = GREATER_ICOST;
             }
         }
@@ -1571,7 +1561,7 @@ public class CBZip2OutputStream extends OutputStream
         /* Decide how many coding tables to use */
         // assert (this.nMTF > 0) : this.nMTF;
         final int nGroups = (this.nMTF < 200) ? 2 : (this.nMTF < 600) ? 3
-            : (this.nMTF < 1200) ? 4 : (this.nMTF < 2400) ? 5 : 6;
+                : (this.nMTF < 1200) ? 4 : (this.nMTF < 2400) ? 5 : 6;
 
         /* Generate an initial set of coding tables */
         sendMTFValues0(nGroups, alphaSize);
@@ -1612,17 +1602,17 @@ public class CBZip2OutputStream extends OutputStream
             int ge = gs - 1;
             int aFreq = 0;
 
-            for (final int a = alphaSize - 1; (aFreq < tFreq) && (ge < a);) {
+            for (final int a = alphaSize - 1; (aFreq < tFreq) && (ge < a); ) {
                 aFreq += mtfFreq[++ge];
             }
 
             if ((ge > gs) && (nPart != nGroups) && (nPart != 1)
-                && (((nGroups - nPart) & 1) != 0)) {
+                    && (((nGroups - nPart) & 1) != 0)) {
                 aFreq -= mtfFreq[ge--];
             }
 
             final byte[] len_np = len[nPart - 1];
-            for (int v = alphaSize; --v >= 0;) {
+            for (int v = alphaSize; --v >= 0; ) {
                 if ((v >= gs) && (v <= ge)) {
                     len_np[v] = LESSER_ICOST;
                 } else {
@@ -1654,17 +1644,17 @@ public class CBZip2OutputStream extends OutputStream
         int nSelectors = 0;
 
         for (int iter = 0; iter < N_ITERS; iter++) {
-            for (int t = nGroups; --t >= 0;) {
+            for (int t = nGroups; --t >= 0; ) {
                 fave[t] = 0;
                 int[] rfreqt = rfreq[t];
-                for (int i = alphaSize; --i >= 0;) {
+                for (int i = alphaSize; --i >= 0; ) {
                     rfreqt[i] = 0;
                 }
             }
 
             nSelectors = 0;
 
-            for (int gs = 0; gs < this.nMTF;) {
+            for (int gs = 0; gs < this.nMTF; ) {
                 /* Set group start & end marks. */
 
                 /*
@@ -1702,13 +1692,13 @@ public class CBZip2OutputStream extends OutputStream
                     cost[5] = cost5;
 
                 } else {
-                    for (int t = nGroups; --t >= 0;) {
+                    for (int t = nGroups; --t >= 0; ) {
                         cost[t] = 0;
                     }
 
                     for (int i = gs; i <= ge; i++) {
                         final int icv = sfmap[i];
-                        for (int t = nGroups; --t >= 0;) {
+                        for (int t = nGroups; --t >= 0; ) {
                             cost[t] += len[t][icv] & 0xff;
                         }
                     }
@@ -1719,7 +1709,7 @@ public class CBZip2OutputStream extends OutputStream
                  * record its identity in the selector table.
                  */
                 int bt = -1;
-                for (int t = nGroups, bc = 999999999; --t >= 0;) {
+                for (int t = nGroups, bc = 999999999; --t >= 0; ) {
                     final int cost_t = cost[t];
                     if (cost_t < bc) {
                         bc = cost_t;
@@ -1759,7 +1749,7 @@ public class CBZip2OutputStream extends OutputStream
         final Data dataShadow = this.data;
         byte[] pos = dataShadow.sendMTFValues2_pos;
 
-        for (int i = nGroups; --i >= 0;) {
+        for (int i = nGroups; --i >= 0; ) {
             pos[i] = (byte) i;
         }
 
@@ -1788,7 +1778,7 @@ public class CBZip2OutputStream extends OutputStream
             int minLen = 32;
             int maxLen = 0;
             final byte[] len_t = len[t];
-            for (int i = alphaSize; --i >= 0;) {
+            for (int i = alphaSize; --i >= 0; ) {
                 final int l = len_t[i] & 0xff;
                 if (l > maxLen) {
                     maxLen = l;
@@ -1809,10 +1799,10 @@ public class CBZip2OutputStream extends OutputStream
         final boolean[] inUse = this.data.inUse;
         final boolean[] inUse16 = this.data.sentMTFValues4_inUse16;
 
-        for (int i = 16; --i >= 0;) {
+        for (int i = 16; --i >= 0; ) {
             inUse16[i] = false;
             final int i16 = i * 16;
-            for (int j = 16; --j >= 0;) {
+            for (int j = 16; --j >= 0; ) {
                 if (inUse[i16 + j]) {
                     inUse16[i] = true;
                 }
@@ -1850,7 +1840,7 @@ public class CBZip2OutputStream extends OutputStream
     }
 
     private void sendMTFValues5(final int nGroups, final int nSelectors)
-        throws IOException {
+            throws IOException {
         bsW(3, nGroups);
         bsW(15, nSelectors);
 
@@ -1887,7 +1877,7 @@ public class CBZip2OutputStream extends OutputStream
     }
 
     private void sendMTFValues6(final int nGroups, final int alphaSize)
-        throws IOException {
+            throws IOException {
         final byte[][] len = this.data.sendMTFValues_len;
         final OutputStream outShadow = this.out;
 
@@ -1964,7 +1954,7 @@ public class CBZip2OutputStream extends OutputStream
         int bsLiveShadow = this.bsLive;
         int bsBuffShadow = this.bsBuff;
 
-        for (int gs = 0; gs < nMTFShadow;) {
+        for (int gs = 0; gs < nMTFShadow; ) {
             final int ge = Math.min(gs + G_SIZE - 1, nMTFShadow - 1);
             final int selector_selCtr = selector[selCtr] & 0xff;
             final int[] code_selCtr = code[selector_selCtr];
@@ -1998,7 +1988,7 @@ public class CBZip2OutputStream extends OutputStream
     }
 
     public void write(final byte[] buf, int offs, final int len)
-        throws IOException {
+            throws IOException {
         if (offs < 0) {
             throw new IndexOutOfBoundsException("offs(" + offs + ") < 0.");
         }
@@ -2007,14 +1997,14 @@ public class CBZip2OutputStream extends OutputStream
         }
         if (offs + len > buf.length) {
             throw new IndexOutOfBoundsException("offs(" + offs + ") + len("
-                                                + len + ") > buf.length("
-                                                + buf.length + ").");
+                    + len + ") > buf.length("
+                    + buf.length + ").");
         }
         if (this.out == null) {
             throw new IOException("stream closed");
         }
 
-        for (int hi = offs + len; offs < hi;) {
+        for (int hi = offs + len; offs < hi; ) {
             write0(buf[offs++]);
         }
     }
@@ -2061,37 +2051,37 @@ public class CBZip2OutputStream extends OutputStream
             this.crc.updateCRC(currentCharShadow, runLengthShadow);
 
             switch (runLengthShadow) {
-            case 1:
-                dataShadow.block[lastShadow + 2] = ch;
-                this.last = lastShadow + 1;
+                case 1:
+                    dataShadow.block[lastShadow + 2] = ch;
+                    this.last = lastShadow + 1;
+                    break;
+
+                case 2:
+                    dataShadow.block[lastShadow + 2] = ch;
+                    dataShadow.block[lastShadow + 3] = ch;
+                    this.last = lastShadow + 2;
+                    break;
+
+                case 3: {
+                    final byte[] block = dataShadow.block;
+                    block[lastShadow + 2] = ch;
+                    block[lastShadow + 3] = ch;
+                    block[lastShadow + 4] = ch;
+                    this.last = lastShadow + 3;
+                }
                 break;
 
-            case 2:
-                dataShadow.block[lastShadow + 2] = ch;
-                dataShadow.block[lastShadow + 3] = ch;
-                this.last = lastShadow + 2;
-                break;
-
-            case 3: {
-                final byte[] block = dataShadow.block;
-                block[lastShadow + 2] = ch;
-                block[lastShadow + 3] = ch;
-                block[lastShadow + 4] = ch;
-                this.last = lastShadow + 3;
-            }
-                break;
-
-            default: {
-                runLengthShadow -= 4;
-                dataShadow.inUse[runLengthShadow] = true;
-                final byte[] block = dataShadow.block;
-                block[lastShadow + 2] = ch;
-                block[lastShadow + 3] = ch;
-                block[lastShadow + 4] = ch;
-                block[lastShadow + 5] = ch;
-                block[lastShadow + 6] = (byte) runLengthShadow;
-                this.last = lastShadow + 5;
-            }
+                default: {
+                    runLengthShadow -= 4;
+                    dataShadow.inUse[runLengthShadow] = true;
+                    final byte[] block = dataShadow.block;
+                    block[lastShadow + 2] = ch;
+                    block[lastShadow + 3] = ch;
+                    block[lastShadow + 4] = ch;
+                    block[lastShadow + 5] = ch;
+                    block[lastShadow + 6] = (byte) runLengthShadow;
+                    this.last = lastShadow + 5;
+                }
                 break;
 
             }
