@@ -6,9 +6,14 @@ val commonSettings = Seq(
 
 val typesafeConfigVersion = "1.3.3"
 val twitterUtilVersion = "19.1.0"
+
 val zioVersion = "0.6.0"
+val zioInteropVersion = "0.5.0"
+
 val nettyVersion = "4.1.33.Final"
 val scalaTestVersion = "3.0.5"
+
+val redisClientVersion = "3.9"
 
 lazy val domain = project("domain")
   .settings(commonSettings: _*)
@@ -33,7 +38,11 @@ lazy val application = project("application")
   .settings(
     libraryDependencies ++= {
       val main = Seq(
+        "net.debasishg" %% "redisclient" % redisClientVersion,
+        
         "org.scalaz" %% "scalaz-zio" % zioVersion,
+        "org.scalaz" %% "scalaz-zio-interop" % zioInteropVersion,
+        
         "io.netty" % "netty-buffer" % nettyVersion,
         "com.typesafe" % "config" % typesafeConfigVersion,
         "com.twitter" %% "util-collection" % twitterUtilVersion
