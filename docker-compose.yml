@@ -9,3 +9,6 @@ services:
     build: .
     environment:
       PORT: 43594
+
+      MEMSTORE_HOST: "localhost"
+      MEMSTORE_PORT: 6379
