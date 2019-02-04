@@ -1,23 +1,23 @@
-/**
- * Copyright (c) OpenRS
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+/*
+  Copyright (c) OpenRS
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
  */
 package io.unity.application.storage;
 
@@ -28,8 +28,9 @@ import java.nio.ByteBuffer;
 /**
  * @author Graham
  * @author `Discardedx2
+ * @author Sino
  */
-public final class Sector {
+public final class Page {
 
 	/**
 	 * The size of the header within a sector in bytes.
@@ -57,13 +58,13 @@ public final class Sector {
 	public static final int SIZE = HEADER_SIZE + DATA_SIZE;
 
 	/**
-	 * Decodes the specified {@link ByteBuffer} into a {@link Sector} object.
+	 * Decodes the specified {@link ByteBuffer} into a {@link Page} object.
 	 * 
 	 * @param buf
 	 *            The buffer.
 	 * @return The sector.
 	 */
-	public static Sector decode(ByteBuffer buf) {
+	public static Page decode(ByteBuffer buf) {
 		if (buf.remaining() != SIZE)
 			throw new IllegalArgumentException();
 
@@ -74,17 +75,17 @@ public final class Sector {
 		byte[] data = new byte[DATA_SIZE];
 		buf.get(data);
 
-		return new Sector(type, id, chunk, nextSector, data);
+		return new Page(type, id, chunk, nextSector, data);
 	}
 
 	/**
-	 * Decodes the specified {@link ByteBuffer} into a {@link Sector} object.
+	 * Decodes the specified {@link ByteBuffer} into a {@link Page} object.
 	 * 
 	 * @param buf
 	 *            The buffer.
 	 * @return The sector.
 	 */
-	public static Sector decodeExtended(ByteBuffer buf) {
+	public static Page decodeExtended(ByteBuffer buf) {
 		if (buf.remaining() != SIZE)
 			throw new IllegalArgumentException();
 
@@ -95,7 +96,7 @@ public final class Sector {
 		byte[] data = new byte[EXTENDED_DATA_SIZE];
 		buf.get(data);
 
-		return new Sector(type, id, chunk, nextSector, data);
+		return new Page(type, id, chunk, nextSector, data);
 	}
 
 	/**
@@ -137,7 +138,7 @@ public final class Sector {
 	 * @param data
 	 *            The data in this sector.
 	 */
-	public Sector(int type, int id, int chunk, int nextSector, byte[] data) {
+	public Page(int type, int id, int chunk, int nextSector, byte[] data) {
 		this.type = type;
 		this.id = id;
 		this.chunk = chunk;

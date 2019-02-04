@@ -31,47 +31,48 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 
 /**
- * A {@link ChecksumTable} stores checksums and versions of
- * {@link ReferenceTable}s. When encoded in a {@link Container} and prepended
+ * A {@link ReleaseManifest} stores checksums and versions of
+ * {@link ArchiveManifest}s. When encoded in a {@link Container} and prepended
  * with the file type and id it is more commonly known as the client's
  * "update keys".
  * 
  * @author Graham
  * @author `Discardedx2
+ * @author Sino
  */
-public class ChecksumTable {
+public final class ReleaseManifest {
 
 	/**
-	 * Decodes the {@link ChecksumTable} in the specified {@link ByteBuffer}.
+	 * Decodes the {@link ReleaseManifest} in the specified {@link ByteBuffer}.
 	 * Whirlpool digests are not read.
 	 * 
 	 * @param buffer
 	 *            The {@link ByteBuffer} containing the table.
-	 * @return The decoded {@link ChecksumTable}.
+	 * @return The decoded {@link ReleaseManifest}.
 	 * @throws IOException
 	 *             if an I/O error occurs.
 	 */
-	public static ChecksumTable decode(ByteBuffer buffer) throws IOException {
+	public static ReleaseManifest decode(ByteBuffer buffer) throws IOException {
 		return decode(buffer, false);
 	}
 
 	/**
-	 * Decodes the {@link ChecksumTable} in the specified {@link ByteBuffer}.
+	 * Decodes the {@link ReleaseManifest} in the specified {@link ByteBuffer}.
 	 * 
 	 * @param buffer
 	 *            The {@link ByteBuffer} containing the table.
 	 * @param whirlpool
 	 *            If whirlpool digests should be read.
-	 * @return The decoded {@link ChecksumTable}.
+	 * @return The decoded {@link ReleaseManifest}.
 	 * @throws IOException
 	 *             if an I/O error occurs.
 	 */
-	public static ChecksumTable decode(ByteBuffer buffer, boolean whirlpool) throws IOException {
+	public static ReleaseManifest decode(ByteBuffer buffer, boolean whirlpool) throws IOException {
 		return decode(buffer, whirlpool, null, null);
 	}
 
 	/**
-	 * Decodes the {@link ChecksumTable} in the specified {@link ByteBuffer} and
+	 * Decodes the {@link ReleaseManifest} in the specified {@link ByteBuffer} and
 	 * decrypts the final whirlpool hash.
 	 * 
 	 * @param buffer
@@ -82,15 +83,15 @@ public class ChecksumTable {
 	 *            The modulus.
 	 * @param publicKey
 	 *            The public key.
-	 * @return The decoded {@link ChecksumTable}.
+	 * @return The decoded {@link ReleaseManifest}.
 	 * @throws IOException
 	 *             if an I/O error occurs.
 	 */
-	public static ChecksumTable decode(ByteBuffer buffer, boolean whirlpool, BigInteger modulus, BigInteger publicKey)
+	public static ReleaseManifest decode(ByteBuffer buffer, boolean whirlpool, BigInteger modulus, BigInteger publicKey)
 			throws IOException {
 		/* find out how many entries there are and allocate a new table */
 		int size = whirlpool ? (buffer.get() & 0xFF) : (buffer.limit() / 8);
-		ChecksumTable table = new ChecksumTable(size);
+		ReleaseManifest table = new ReleaseManifest(size);
 
 		/* calculate the whirlpool digest we expect to have at the end */
 		byte[] masterDigest = null;
@@ -139,8 +140,8 @@ public class ChecksumTable {
 	}
 
 	/**
-	 * Represents a single entry in a {@link ChecksumTable}. Each entry contains
-	 * a CRC32 checksum and version of the corresponding {@link ReferenceTable}.
+	 * Represents a single entry in a {@link ReleaseManifest}. Each entry contains
+	 * a CRC32 checksum and version of the corresponding {@link ArchiveManifest}.
 	 * 
 	 * @author Graham Edgecombe
 	 */
@@ -246,17 +247,17 @@ public class ChecksumTable {
 	private final Entry[] entries;
 
 	/**
-	 * Creates a new {@link ChecksumTable} with the specified size.
+	 * Creates a new {@link ReleaseManifest} with the specified size.
 	 * 
 	 * @param size
 	 *            The number of entries in this table.
 	 */
-	public ChecksumTable(int size) {
+	public ReleaseManifest(int size) {
 		entries = new Entry[size];
 	}
 
 	/**
-	 * Encodes this {@link ChecksumTable}. Whirlpool digests are not encoded.
+	 * Encodes this {@link ReleaseManifest}. Whirlpool digests are not encoded.
 	 * 
 	 * @return The encoded {@link ByteBuffer}.
 	 * @throws IOException
@@ -267,7 +268,7 @@ public class ChecksumTable {
 	}
 
 	/**
-	 * Encodes this {@link ChecksumTable}.
+	 * Encodes this {@link ReleaseManifest}.
 	 * 
 	 * @param whirlpool
 	 *            If whirlpool digests should be encoded.
@@ -280,7 +281,7 @@ public class ChecksumTable {
 	}
 
 	/**
-	 * Encodes this {@link ChecksumTable} and encrypts the final whirlpool hash.
+	 * Encodes this {@link ReleaseManifest} and encrypts the final whirlpool hash.
 	 * 
 	 * @param whirlpool
 	 *            If whirlpool digests should be encoded.

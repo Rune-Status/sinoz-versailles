@@ -1,5 +1,5 @@
 /*
-  Copyright (c) OpenRS
+ Copyright (c) Kyle Fricilone
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -19,40 +19,39 @@
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
  */
-package io.unity.application.storage.util.crypto;
-
-import java.math.BigInteger;
-import java.nio.ByteBuffer;
+package io.unity.application.storage;
 
 /**
- * An implementation of the RSA algorithm.
- * @author Graham
- * @author `Discardedx2
+ *
+ * @author Kyle Friz
+ * @author Sino
  */
-public final class Rsa {
+public enum ArchiveType {
+	BINARY(10), 
+	CLIENTSCRIPT(12), 
+	CONFIGS(2), 
+	FONTS(13), 
+	INSTRUMENTS(15), 
+	INTERFACES(3), 
+	LANDSCAPES(5), 
+	MODELS(7), 
+	REFERENCE(255), 
+	SKELETONS(0), 
+	SKINS(1),
+	SOUNDEFFECTS(4), 
+	SPRITES(8), 
+	TEXTURES(9), 
+	TRACK1(6), 
+	TRACK2(11), 
+	VORBIS(14);
 
-	/**
-	 * Encrypts/decrypts the specified buffer with the key and modulus.
-	 * @param buffer The input buffer.
-	 * @param modulus The modulus.
-	 * @param key The key.
-	 * @return The output buffer.
-	 */
-	public static ByteBuffer crypt(ByteBuffer buffer, BigInteger modulus, BigInteger key) {
-		byte[] bytes = new byte[buffer.limit()];
-		buffer.get(bytes);
+	private final int id;
 
-		BigInteger in = new BigInteger(bytes);
-		BigInteger out = in.modPow(key, modulus);
-
-		return ByteBuffer.wrap(out.toByteArray());
+	ArchiveType(int id) {
+		this.id = id;
 	}
 
-	/**
-	 * Default private constructor to prevent instantiation.
-	 */
-	private Rsa() {
-		
+	public final int getId() {
+		return id;
 	}
-
 }

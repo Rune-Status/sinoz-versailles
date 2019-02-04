@@ -1,23 +1,23 @@
-/**
- * Copyright (c) OpenRS
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+/*
+  Copyright (c) OpenRS
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
  */
 package io.unity.application.storage.util;
 
@@ -33,9 +33,9 @@ import java.util.zip.Checksum;
  * 
  * @author Graham
  * @author `Discardedx2
+ * @author Sino
  */
 public final class ByteBufferUtils {
-
 	/**
 	 * The modified set of 'extended ASCII' characters used by the client.
 	 */
@@ -67,7 +67,7 @@ public final class ByteBufferUtils {
 	 *            The buffer.
 	 * @return The decoded string.
 	 */
-	public static String getString(ByteBuffer buf) {
+	public static String getCString(ByteBuffer buf) {
 		StringBuilder bldr = new StringBuilder();
 		int b;
 		while ((b = buf.get()) != 0) {
@@ -94,9 +94,9 @@ public final class ByteBufferUtils {
 	 *            The buffer.
 	 * @return The decoded string.
 	 */
-	public static String getPrefixedString(ByteBuffer buf) {
+	public static String getDoubleEndedCString(ByteBuffer buf) {
 		if (buf.get() == 0)
-			return getString(buf);
+			return getCString(buf);
 		
 		return null;
 	}
@@ -126,7 +126,7 @@ public final class ByteBufferUtils {
 	/**
 	 * Gets a unsigned smart from the buffer.
 	 * 
-	 * @param buffer
+	 * @param buf
 	 *            The buffer.
 	 * @return The value.
 	 */
@@ -141,7 +141,7 @@ public final class ByteBufferUtils {
 	/**
 	 * Gets a signed smart from the buffer.
 	 * 
-	 * @param buffer
+	 * @param buf
 	 *            The buffer.
 	 * @return The value.
 	 */
@@ -244,37 +244,6 @@ public final class ByteBufferUtils {
 		return builder.toString();
 	}
 	
-	/**
-	 * Puts a 317 format String into the buffer
-	 * @param buffer
-	 * @param text
-	 */
-	public static void putString317(ByteBuffer buffer, String val) {
-		buffer.put(val.getBytes());
-		buffer.put((byte) 10);
-	}
-	
-	/**
-	 * Clones a bytebuffer
-	 * @param original
-	 * @return
-	 */
-	public static ByteBuffer clone(final ByteBuffer original) {
-	    // Create clone with same capacity as original.
-	    final ByteBuffer clone = (original.isDirect()) ?
-	        ByteBuffer.allocateDirect(original.capacity()) :
-	        ByteBuffer.allocate(original.capacity());
-
-	    // Create a read-only copy of the original.
-	    // This allows reading from the original without modifying it.
-	    final ByteBuffer readOnlyCopy = original.asReadOnlyBuffer();
-
-	    // Read from the original.
-	    clone.put(readOnlyCopy);
-
-	    return clone;
-	}
-	
 	public static void putVarInt(ByteBuffer buffer, int val) {
 		if ((val & 0xFFFFFF80) != 0) {
 			if ((val & 0xFFFFC000) != 0) {
@@ -320,8 +289,5 @@ public final class ByteBufferUtils {
 	/**
 	 * Default private constructor to prevent instantiation.
 	 */
-	private ByteBufferUtils() {
-
-	}
-
+	private ByteBufferUtils() { }
 }

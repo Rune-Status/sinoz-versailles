@@ -27,26 +27,27 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
- * An {@link Archive} is a file within the cache that can have multiple member
+ * An {@link Folder} is a file within the cache that can have multiple member
  * files inside it.
  * 
  * @author Graham
  * @author `Discardedx2
+ * @author Sino
  */
-public class Archive {
+public final class Folder {
 
 	/**
-	 * Decodes the specified {@link ByteBuffer} into an {@link Archive}.
+	 * Decodes the specified {@link ByteBuffer} into an {@link Folder}.
 	 * 
 	 * @param buffer
 	 *            The buffer.
 	 * @param size
 	 *            The size of the archive.
-	 * @return The decoded {@link Archive}.
+	 * @return The decoded {@link Folder}.
 	 */
-	public static Archive decode(ByteBuffer buffer, int size) {
+	public static Folder decode(ByteBuffer buffer, int size) {
 		/* allocate a new archive object */
-		Archive archive = new Archive(size);
+		Folder archive = new Folder(size);
 
 		/* read the number of chunks at the end of the archive */
 		buffer.position(buffer.limit() - 1);
@@ -112,12 +113,12 @@ public class Archive {
 	 * @param size
 	 *            The number of entries in the archive.
 	 */
-	public Archive(int size) {
+	public Folder(int size) {
 		this.entries = new ByteBuffer[size];
 	}
 
 	/**
-	 * Encodes this {@link Archive} into a {@link ByteBuffer}.
+	 * Encodes this {@link Folder} into a {@link ByteBuffer}.
 	 * <p />
 	 * Please note that this is a fairly simple implementation that does not
 	 * attempt to use more than one chunk.

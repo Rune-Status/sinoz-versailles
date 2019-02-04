@@ -26,7 +26,7 @@ package io.unity.application.storage;
  * 
  * @since May 27, 2015
  */
-public enum ConfigArchive {
+public enum FolderType {
 
 	AREA(35),
 	ENUM(8),
@@ -50,7 +50,7 @@ public enum ConfigArchive {
 
 	private final int id;
 
-	ConfigArchive(int id) {
+	FolderType(int id) {
 		this.id = id;
 	}
 

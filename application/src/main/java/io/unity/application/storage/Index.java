@@ -30,6 +30,7 @@ import java.nio.ByteBuffer;
  * 
  * @author Graham
  * @author `Discardedx2
+ * @author Sino
  */
 public final class Index {
 
@@ -60,21 +61,21 @@ public final class Index {
 	private int size;
 
 	/**
-	 * The number of the first sector that contains the file.
+	 * The number of the first page that contains the file.
 	 */
-	private int sector;
+	private int page;
 
 	/**
 	 * Creates a new index.
 	 * 
 	 * @param size
 	 *            The size of the file in bytes.
-	 * @param sector
-	 *            The number of the first sector that contains the file.
+	 * @param page
+	 *            The number of the first page that contains the file.
 	 */
-	public Index(int size, int sector) {
+	public Index(int size, int page) {
 		this.size = size;
-		this.sector = sector;
+		this.page = page;
 	}
 
 	/**
@@ -85,17 +86,17 @@ public final class Index {
 	public ByteBuffer encode() {
 		ByteBuffer buf = ByteBuffer.allocate(Index.SIZE);
 		ByteBufferUtils.putMedium(buf, size);
-		ByteBufferUtils.putMedium(buf, sector);
+		ByteBufferUtils.putMedium(buf, page);
 		return (ByteBuffer) buf.flip();
 	}
 
 	/**
-	 * Gets the number of the first sector that contains the file.
+	 * Gets the number of the first page that contains the file.
 	 * 
-	 * @return The number of the first sector that contains the file.
+	 * @return The number of the first page that contains the file.
 	 */
-	public int getSector() {
-		return sector;
+	public int getPage() {
+		return page;
 	}
 
 	/**

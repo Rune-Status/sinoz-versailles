@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) OpenRS
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -31,23 +31,24 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 /**
- * A {@link ReferenceTable} holds details for all the files with a single type,
+ * A {@link ArchiveManifest} holds details for all the files with a single type,
  * such as checksums, versions and archive members. There are also optional
  * fields for identifier hashes and whirlpool digests.
  * 
  * @author Graham
  * @author `Discardedx2
  * @author Sean
+ * @author Sino
  */
-public class ReferenceTable {
+public final class ArchiveManifest {
 
 	/**
-	 * Represents a child entry within an {@link Entry} in the
-	 * {@link ReferenceTable}.
+	 * Represents a child entry within an {@link FolderManifest} in the
+	 * {@link ArchiveManifest}.
 	 * 
 	 * @author Graham Edgecombe
 	 */
-	public static class ChildEntry {
+	public static class PackManifest {
 
 		/**
 		 * This entry's identifier.
@@ -59,7 +60,7 @@ public class ReferenceTable {
 		 */
 		private final int index;
 
-		public ChildEntry(int index) {
+		public PackManifest(int index) {
 			this.index = index;
 		}
 
@@ -94,11 +95,11 @@ public class ReferenceTable {
 	}
 
 	/**
-	 * Represents a single entry within a {@link ReferenceTable}.
+	 * Represents a single entry within a {@link ArchiveManifest}.
 	 * 
 	 * @author Graham Edgecombe
 	 */
-	public static class Entry {
+	public static class FolderManifest {
 
 		/**
 		 * The identifier of this entry.
@@ -143,14 +144,14 @@ public class ReferenceTable {
 		/**
 		 * Child identifiers table
 		 */
-		private Identifiers identifiers;
+		private LabelHashSet identifiers;
 
 		/**
 		 * The children in this entry.
 		 */
-		private final SortedMap<Integer, ChildEntry> entries = new TreeMap<Integer, ChildEntry>();
+		private final SortedMap<Integer, PackManifest> entries = new TreeMap<Integer, PackManifest>();
 
-		public Entry(int index) {
+		public FolderManifest(int index) {
 			this.index = index;
 		}
 
@@ -191,7 +192,7 @@ public class ReferenceTable {
 		 *            The id.
 		 * @return The entry, or {@code null} if it does not exist.
 		 */
-		public ChildEntry getEntry(int id) {
+		public PackManifest getEntry(int id) {
 			return entries.get(id);
 		}
 
@@ -257,7 +258,7 @@ public class ReferenceTable {
 		 * @param entry
 		 *            The entry.
 		 */
-		public void putEntry(int id, ChildEntry entry) {
+		public void putEntry(int id, PackManifest entry) {
 			entries.put(id, entry);
 		}
 
@@ -328,25 +329,25 @@ public class ReferenceTable {
 	}
 
 	/**
-	 * A flag which indicates this {@link ReferenceTable} contains {@link BKDR}
-	 * hashed identifiers.
+	 * A flag which indicates this {@link ArchiveManifest} contains
+	 * {@link io.unity.application.storage.util.crypto.Djb2} hashed identifiers.
 	 */
 	public static final int FLAG_IDENTIFIERS = 0x01;
 
 	/**
-	 * A flag which indicates this {@link ReferenceTable} contains whirlpool
+	 * A flag which indicates this {@link ArchiveManifest} contains whirlpool
 	 * digests for its entries.
 	 */
 	public static final int FLAG_WHIRLPOOL = 0x02;
 
 	/**
-	 * A flag which indicates this {@link ReferenceTable} contains compression
+	 * A flag which indicates this {@link ArchiveManifest} contains compression
 	 * sizes.
 	 */
 	public static final int FLAG_SIZES = 0x04;
 
 	/**
-	 * A flag which indicates this {@link ReferenceTable} contains a type of
+	 * A flag which indicates this {@link ArchiveManifest} contains a type of
 	 * hash.
 	 */
 	public static final int FLAG_HASH = 0x08;
@@ -359,87 +360,88 @@ public class ReferenceTable {
 	 *            The buffer.
 	 * @return The slave checksum table.
 	 */
-	public static ReferenceTable decode(ByteBuffer buffer) {
-		/* create a new table */
-		ReferenceTable table = new ReferenceTable();
+	public static ArchiveManifest decode(ByteBuffer buffer) {
+		ArchiveManifest manifest = new ArchiveManifest();
 
 		/* read header */
-		table.format = buffer.get() & 0xFF;
-		if (table.format < 5 || table.format > 7) {
+		manifest.format = buffer.get() & 0xFF;
+		if (manifest.format < 5 || manifest.format > 7) {
 			throw new RuntimeException();
 		}
-		if (table.format >= 6) {
-			table.version = buffer.getInt();
+
+		if (manifest.format >= 6) {
+			manifest.version = buffer.getInt();
 		}
 		
-		table.flags = buffer.get() & 0xFF;
+		manifest.flags = buffer.get() & 0xFF;
 
 		/* read the ids */
-		int[] ids = new int[table.format >= 7 ? ByteBufferUtils.getSmartInt(buffer) : buffer.getShort() & 0xFFFF];
+		int[] ids = new int[manifest.format >= 7 ? ByteBufferUtils.getSmartInt(buffer) : buffer.getShort() & 0xFFFF];
 		int accumulator = 0, size = -1;
 		for (int i = 0; i < ids.length; i++) {
-			int delta = table.format >= 7 ? ByteBufferUtils.getSmartInt(buffer) : buffer.getShort() & 0xFFFF;
+			int delta = manifest.format >= 7 ? ByteBufferUtils.getSmartInt(buffer) : buffer.getShort() & 0xFFFF;
 			ids[i] = accumulator += delta;
 			if (ids[i] > size) {
 				size = ids[i];
 			}
 		}
+
 		size++;
-		// table.indices = ids;
 
 		/* and allocate specific entries within that array */
 		int index = 0;
 		for (int id : ids) {
-			table.entries.put(id, new Entry(index++));
+			manifest.entries.put(id, new FolderManifest(index++));
 		}
 
 		/* read the identifiers if present */
 		int[] identifiersArray = new int[size];
-		if ((table.flags & FLAG_IDENTIFIERS) != 0) {
+		if ((manifest.flags & FLAG_IDENTIFIERS) != 0) {
 			for (int id : ids) {
 				int identifier = buffer.getInt();
 				identifiersArray[id] = identifier;
-				table.entries.get(id).identifier = identifier;
+				manifest.entries.get(id).identifier = identifier;
 			}
 		}
-		table.identifiers = new Identifiers(identifiersArray);
+
+		manifest.identifiers = new LabelHashSet(identifiersArray);
 
 		/* read the CRC32 checksums */
 		for (int id : ids) {
-			table.entries.get(id).crc = buffer.getInt();
+			manifest.entries.get(id).crc = buffer.getInt();
 		}
 
 		/* read another hash if present */
-		if ((table.flags & FLAG_HASH) != 0) {
+		if ((manifest.flags & FLAG_HASH) != 0) {
 			for (int id : ids) {
-				table.entries.get(id).hash = buffer.getInt();
+				manifest.entries.get(id).hash = buffer.getInt();
 			}
 		}
 
 		/* read the whirlpool digests if present */
-		if ((table.flags & FLAG_WHIRLPOOL) != 0) {
+		if ((manifest.flags & FLAG_WHIRLPOOL) != 0) {
 			for (int id : ids) {
-				buffer.get(table.entries.get(id).whirlpool);
+				buffer.get(manifest.entries.get(id).whirlpool);
 			}
 		}
 
 		/* read the sizes of the archive */
-		if ((table.flags & FLAG_SIZES) != 0) {
+		if ((manifest.flags & FLAG_SIZES) != 0) {
 			for (int id : ids) {
-				table.entries.get(id).compressed = buffer.getInt();
-				table.entries.get(id).uncompressed = buffer.getInt();
+				manifest.entries.get(id).compressed = buffer.getInt();
+				manifest.entries.get(id).uncompressed = buffer.getInt();
 			}
 		}
 
 		/* read the version numbers */
 		for (int id : ids) {
-			table.entries.get(id).version = buffer.getInt();
+			manifest.entries.get(id).version = buffer.getInt();
 		}
 
 		/* read the child sizes */
 		int[][] members = new int[size][];
 		for (int id : ids) {
-			members[id] = new int[table.format >= 7 ? ByteBufferUtils.getSmartInt(buffer) : buffer.getShort() & 0xFFFF];
+			members[id] = new int[manifest.format >= 7 ? ByteBufferUtils.getSmartInt(buffer) : buffer.getShort() & 0xFFFF];
 		}
 
 		/* read the child ids */
@@ -450,7 +452,7 @@ public class ReferenceTable {
 
 			/* loop through the array of ids */
 			for (int i = 0; i < members[id].length; i++) {
-				int delta = table.format >= 7 ? ByteBufferUtils.getSmartInt(buffer) : buffer.getShort() & 0xFFFF;
+				int delta = manifest.format >= 7 ? ByteBufferUtils.getSmartInt(buffer) : buffer.getShort() & 0xFFFF;
 				members[id][i] = accumulator += delta;
 				if (members[id][i] > size) {
 					size = members[id][i];
@@ -461,25 +463,25 @@ public class ReferenceTable {
 			/* and allocate specific entries within the array */
 			index = 0;
 			for (int child : members[id]) {
-				table.entries.get(id).entries.put(child, new ChildEntry(index++));
+				manifest.entries.get(id).entries.put(child, new PackManifest(index++));
 			}
 		}
 
 		/* read the child identifiers if present */
-		if ((table.flags & FLAG_IDENTIFIERS) != 0) {
+		if ((manifest.flags & FLAG_IDENTIFIERS) != 0) {
 			for (int id : ids) {
 				identifiersArray = new int[members[id].length];
 				for (int child : members[id]) {
 					int identifier = buffer.getInt();
 					identifiersArray[child] = identifier;
-					table.entries.get(id).entries.get(child).identifier = identifier;
+					manifest.entries.get(id).entries.get(child).identifier = identifier;
 				}
-				table.entries.get(id).identifiers = new Identifiers(identifiersArray);
+				manifest.entries.get(id).identifiers = new LabelHashSet(identifiersArray);
 			}
 		}
 
 		/* return the table we constructed */
-		return table;
+		return manifest;
 	}
 
 	/**
@@ -536,12 +538,12 @@ public class ReferenceTable {
 	/**
 	 * The entries in this table.
 	 */
-	private final SortedMap<Integer, Entry> entries = new TreeMap<Integer, Entry>();
+	private final SortedMap<Integer, FolderManifest> entries = new TreeMap<Integer, FolderManifest>();
 
 	/**
 	 * Identifier table
 	 */
-	private Identifiers identifiers;
+	private LabelHashSet identifiers;
 	
 	/**
 	 * Gets the maximum number of entries in this table.
@@ -556,7 +558,7 @@ public class ReferenceTable {
 	}
 
 	/**
-	 * Encodes this {@link ReferenceTable} into a {@link ByteBuffer}.
+	 * Encodes this {@link ArchiveManifest} into a {@link ByteBuffer}.
 	 * 
 	 * @return The {@link ByteBuffer}.
 	 * @throws IOException
@@ -592,50 +594,50 @@ public class ReferenceTable {
 
 			/* write the identifiers if required */
 			if ((flags & FLAG_IDENTIFIERS) != 0) {
-				for (Entry entry : entries.values()) {
+				for (FolderManifest entry : entries.values()) {
 					os.writeInt(entry.identifier);
 				}
 			}
 
 			/* write the CRC checksums */
-			for (Entry entry : entries.values()) {
+			for (FolderManifest entry : entries.values()) {
 				os.writeInt(entry.crc);
 			}
 
 			/* write the hashes if required */
 			if ((flags & FLAG_HASH) != 0) {
-				for (Entry entry : entries.values()) {
+				for (FolderManifest entry : entries.values()) {
 					os.writeInt(entry.hash);
 				}
 			}
 
 			/* write the whirlpool digests if required */
 			if ((flags & FLAG_WHIRLPOOL) != 0) {
-				for (Entry entry : entries.values()) {
+				for (FolderManifest entry : entries.values()) {
 					os.write(entry.whirlpool);
 				}
 			}
 
 			/* write the sizes if required */
 			if ((flags & FLAG_SIZES) != 0) {
-				for (Entry entry : entries.values()) {
+				for (FolderManifest entry : entries.values()) {
 					os.writeInt(entry.compressed);
 					os.writeInt(entry.uncompressed);
 				}
 			}
 
 			/* write the versions */
-			for (Entry entry : entries.values()) {
+			for (FolderManifest entry : entries.values()) {
 				os.writeInt(entry.version);
 			}
 
 			/* calculate and write the number of non-null child entries */
-			for (Entry entry : entries.values()) {
+			for (FolderManifest entry : entries.values()) {
 				putSmartFormat(entry.entries.size(), os);
 			}
 
 			/* write the child ids */
-			for (Entry entry : entries.values()) {
+			for (FolderManifest entry : entries.values()) {
 				last = 0;
 				for (int id = 0; id < entry.capacity(); id++) {
 					if (entry.entries.containsKey(id)) {
@@ -648,8 +650,8 @@ public class ReferenceTable {
 
 			/* write the child identifiers if required */
 			if ((flags & FLAG_IDENTIFIERS) != 0) {
-				for (Entry entry : entries.values()) {
-					for (ChildEntry child : entry.entries.values()) {
+				for (FolderManifest entry : entries.values()) {
+					for (PackManifest child : entry.entries.values()) {
 						os.writeInt(child.identifier);
 					}
 				}
@@ -671,7 +673,7 @@ public class ReferenceTable {
 	 *            The id.
 	 * @return The entry.
 	 */
-	public Entry getEntry(int id) {
+	public FolderManifest getEntry(int id) {
 		return entries.get(id);
 	}
 
@@ -679,11 +681,11 @@ public class ReferenceTable {
 	 * Gets the entry with the specified id, or {@code null} if it does not
 	 * exist.
 	 * 
-	 * @param id
+	 * @param archive
 	 *            The id.
 	 * @return The entry.
 	 */
-	public Entry getEntry(ConfigArchive archive) {
+	public FolderManifest getEntry(FolderType archive) {
 		return getEntry(archive.getID());
 	}
 
@@ -697,8 +699,8 @@ public class ReferenceTable {
 	 *            The child id.
 	 * @return The entry.
 	 */
-	public ChildEntry getEntry(int id, int child) {
-		Entry entry = entries.get(id);
+	public PackManifest getEntry(int id, int child) {
+		FolderManifest entry = entries.get(id);
 		if (entry == null)
 			return null;
 
@@ -740,7 +742,7 @@ public class ReferenceTable {
 	 * @param entry
 	 *            The entry.
 	 */
-	public void putEntry(int id, Entry entry) {
+	public void putEntry(int id, FolderManifest entry) {
 		entries.put(id, entry);
 	}
 
@@ -801,7 +803,7 @@ public class ReferenceTable {
 	public int getArchiveSize() {
 		long sum = 0;
 		for (int i = 0; i < capacity(); i++) {
-			Entry e = entries.get(i);
+			FolderManifest e = entries.get(i);
 			if (e != null) {
 				sum += e.getUncompressed();
 			}
@@ -814,7 +816,7 @@ public class ReferenceTable {
 	 * 
 	 * @return The table
 	 */
-	public Identifiers getIdentifiers() {
+	public LabelHashSet getIdentifiers() {
 		return identifiers;
 	}
 }

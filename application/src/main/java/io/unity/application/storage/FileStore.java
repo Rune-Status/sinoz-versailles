@@ -1,23 +1,23 @@
-/**
- * Copyright (c) 2014 RSE Studios
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+/*
+  Copyright (c) OpenRS
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
  */
 package io.unity.application.storage;
 
@@ -223,16 +223,16 @@ public final class FileStore implements Closeable {
 	/**
 	 * Reads a file.
 	 * 
-	 * @param type
+	 * @param index
 	 *            The type of the file.
-	 * @param id
+	 * @param archive
 	 *            The id of the file.
 	 * @return A {@link ByteBuffer} containing the contents of the file.
 	 * @throws IOException
 	 *             if an I/O error occurs.
 	 */
-	public ByteBuffer read(CacheIndex index, CacheIndex archive) throws IOException {
-		return read(index.getID(), archive.getID());
+	public ByteBuffer read(ArchiveType index, ArchiveType archive) throws IOException {
+		return read(index.getId(), archive.getId());
 	}
 
 	/**
@@ -264,33 +264,33 @@ public final class FileStore implements Closeable {
 		Index index = Index.decode((ByteBuffer) buf.flip());
 
 		ByteBuffer data = ByteBuffer.allocate(index.getSize());
-		buf = ByteBuffer.allocate(Sector.SIZE);
+		buf = ByteBuffer.allocate(Page.SIZE);
 
 		int chunk = 0, remaining = index.getSize();
-		ptr = (long) index.getSector() * (long) Sector.SIZE;
+		ptr = (long) index.getPage() * (long) Page.SIZE;
 		do {
 			buf.clear();
 			FileChannelUtils.readFully(dataChannel, buf, ptr);
 			boolean extended = id > 0xFFFF;
-			Sector sector = extended ? Sector.decodeExtended((ByteBuffer) buf.flip())
-					: Sector.decode((ByteBuffer) buf.flip());
-			int dataSize = extended ? Sector.EXTENDED_DATA_SIZE : Sector.DATA_SIZE;
+			Page page = extended ? Page.decodeExtended((ByteBuffer) buf.flip())
+					: Page.decode((ByteBuffer) buf.flip());
+			int dataSize = extended ? Page.EXTENDED_DATA_SIZE : Page.DATA_SIZE;
 			if (remaining > dataSize) {
-				data.put(sector.getData(), 0, dataSize);
+				data.put(page.getData(), 0, dataSize);
 				remaining -= dataSize;
 
-				if (sector.getType() != type)
+				if (page.getType() != type)
 					throw new IOException("File type mismatch.");
 
-				if (sector.getId() != id)
+				if (page.getId() != id)
 					throw new IOException("File id mismatch.");
 
-				if (sector.getChunk() != chunk++)
+				if (page.getChunk() != chunk++)
 					throw new IOException("Chunk mismatch.");
 
-				ptr = (long) sector.getNextSector() * (long) Sector.SIZE;
+				ptr = (long) page.getNextSector() * (long) Page.SIZE;
 			} else {
-				data.put(sector.getData(), 0, remaining);
+				data.put(page.getData(), 0, remaining);
 				remaining = 0;
 			}
 		} while (remaining > 0);
@@ -339,7 +339,7 @@ public final class FileStore implements Closeable {
 
 		FileChannel indexChannel = type == 255 ? metaChannel : indexChannels[type];
 
-		int nextSector = 0;
+		int nextPage = 0;
 		long ptr = (long) id * (long) Index.SIZE;
 		if (overwrite) {
 			if (ptr < 0)
@@ -351,33 +351,33 @@ public final class FileStore implements Closeable {
 			FileChannelUtils.readFully(indexChannel, buf, ptr);
 
 			Index index = Index.decode((ByteBuffer) buf.flip());
-			nextSector = index.getSector();
-			if (nextSector <= 0 || nextSector > dataChannel.size() * (long) Sector.SIZE)
+			nextPage = index.getPage();
+			if (nextPage <= 0 || nextPage > dataChannel.size() * (long) Page.SIZE)
 				return false;
 		} else {
-			nextSector = (int) ((dataChannel.size() + Sector.SIZE - 1) / (long) Sector.SIZE);
-			if (nextSector == 0)
-				nextSector = 1;
+			nextPage = (int) ((dataChannel.size() + Page.SIZE - 1) / (long) Page.SIZE);
+			if (nextPage == 0)
+				nextPage = 1;
 		}
 
 		boolean extended = id > 0xFFFF;
-		Index index = new Index(data.remaining(), nextSector);
+		Index index = new Index(data.remaining(), nextPage);
 		indexChannel.write(index.encode(), ptr);
 
-		ByteBuffer buf = ByteBuffer.allocate(Sector.SIZE);
+		ByteBuffer buf = ByteBuffer.allocate(Page.SIZE);
 
 		int chunk = 0, remaining = index.getSize();
 		do {
-			int curSector = nextSector;
-			ptr = (long) curSector * (long) Sector.SIZE;
-			nextSector = 0;
+			int curSector = nextPage;
+			ptr = (long) curSector * (long) Page.SIZE;
+			nextPage = 0;
 
 			if (overwrite) {
 				buf.clear();
 				FileChannelUtils.readFully(dataChannel, buf, ptr);
 
-				Sector sector = extended ? Sector.decodeExtended((ByteBuffer) buf.flip())
-						: Sector.decode((ByteBuffer) buf.flip());
+				Page sector = extended ? Page.decodeExtended((ByteBuffer) buf.flip())
+						: Page.decode((ByteBuffer) buf.flip());
 
 				if (sector.getType() != type)
 					return false;
@@ -388,31 +388,31 @@ public final class FileStore implements Closeable {
 				if (sector.getChunk() != chunk)
 					return false;
 
-				nextSector = sector.getNextSector();
-				if (nextSector < 0 || nextSector > dataChannel.size() / (long) Sector.SIZE)
+				nextPage = sector.getNextSector();
+				if (nextPage < 0 || nextPage > dataChannel.size() / (long) Page.SIZE)
 					return false;
 			}
 
-			if (nextSector == 0) {
+			if (nextPage == 0) {
 				overwrite = false;
-				nextSector = (int) ((dataChannel.size() + Sector.SIZE - 1) / (long) Sector.SIZE);
-				if (nextSector == 0)
-					nextSector++;
-				if (nextSector == curSector)
-					nextSector++;
+				nextPage = (int) ((dataChannel.size() + Page.SIZE - 1) / (long) Page.SIZE);
+				if (nextPage == 0)
+					nextPage++;
+				if (nextPage == curSector)
+					nextPage++;
 			}
-			int dataSize = extended ? Sector.EXTENDED_DATA_SIZE : Sector.DATA_SIZE;
+			int dataSize = extended ? Page.EXTENDED_DATA_SIZE : Page.DATA_SIZE;
 			byte[] bytes = new byte[dataSize];
 			if (remaining < dataSize) {
 				data.get(bytes, 0, remaining);
-				nextSector = 0; // mark as EOF
+				nextPage = 0; // mark as EOF
 				remaining = 0;
 			} else {
 				remaining -= dataSize;
 				data.get(bytes, 0, dataSize);
 			}
 
-			Sector sector = new Sector(type, id, chunk++, nextSector, bytes);
+			Page sector = new Page(type, id, chunk++, nextPage, bytes);
 			dataChannel.write(sector.encode(), ptr);
 		} while (remaining > 0);
 

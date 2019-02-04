@@ -1,23 +1,23 @@
-/**
- * Copyright (c) OpenRS
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+/*
+  Copyright (c) OpenRS
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
  */
 package io.unity.application.storage;
 
@@ -39,11 +39,9 @@ import java.util.zip.CRC32;
  * 
  * @author Graham
  * @author `Discardedx2
+ * @author Sino
  */
 public final class Cache implements Closeable {
-
-	private static final Map<String, Integer> identifiers = new HashMap<>();
-	
 	/**
 	 * The file store that backs this cache.
 	 */
@@ -52,7 +50,12 @@ public final class Cache implements Closeable {
 	/**
 	 * The list of reference tables for this cache
 	 */
-	private ReferenceTable[] references;
+	private ArchiveManifest[] references;
+
+	/**
+	 * TODO
+	 */
+	private final Map<String, Integer> identifiers = new HashMap<>();
 
 	/**
 	 * Creates a new {@link Cache} backed by the specified {@link FileStore}.
@@ -64,12 +67,12 @@ public final class Cache implements Closeable {
 	public Cache(FileStore store) throws IOException {
 		this.store = store;
 
-		this.references = new ReferenceTable[store.getTypeCount()];
+		this.references = new ArchiveManifest[store.getTypeCount()];
 		
 		for (int type = 0; type < store.getTypeCount(); type++) {
 			ByteBuffer buf = store.read(255, type);
 			if (buf.limit() > 0) {
-				references[type] = ReferenceTable.decode(Container.decode(buf).getData());
+				references[type] = ArchiveManifest.decode(Container.decode(buf).getData());
 			}
 		}
 	}
@@ -79,26 +82,26 @@ public final class Cache implements Closeable {
 		store.close();
 	}
 
-	public final ReferenceTable getReferenceTable(int type) {
+	public final ArchiveManifest getArchiveManifest(int type) {
 		return references[type];
 	}
 
-	public final ReferenceTable getReferenceTable(CacheIndex index) {
-		return references[index.getID()];
+	public final ArchiveManifest getArchiveManifest(ArchiveType index) {
+		return references[index.getId()];
 	}
 	
 	/**
-	 * Computes the {@link ChecksumTable} for this cache. The checksum table
+	 * Computes the {@link ReleaseManifest} for this cache. The checksum table
 	 * forms part of the so-called "update keys".
 	 * 
-	 * @return The {@link ChecksumTable}.
+	 * @return The {@link ReleaseManifest}.
 	 * @throws IOException
 	 *             if an I/O error occurs.
 	 */
-	public ChecksumTable createChecksumTable() throws IOException {
+	public ReleaseManifest createChecksumTable() throws IOException {
 		/* create the checksum table */
 		int size = store.getTypeCount();
-		ChecksumTable table = new ChecksumTable(size);
+		ReleaseManifest table = new ReleaseManifest(size);
 
 		/*
 		 * loop through all the reference tables and get their CRC and versions
@@ -117,7 +120,7 @@ public final class Cache implements Closeable {
 				 */
 				ByteBuffer buf = store.read(255, i);
 				if (buf != null && buf.limit() > 0) {
-					ReferenceTable ref = references[i];
+					ArchiveManifest ref = references[i];
 					crc = ByteBufferUtils.getCrcChecksum(buf);
 					version = ref.getVersion();
 					files = ref.capacity();
@@ -127,7 +130,7 @@ public final class Cache implements Closeable {
 				}
 			}
 
-			table.setEntry(i, new ChecksumTable.Entry(crc, version, files, archiveSize, whirlpool));
+			table.setEntry(i, new ReleaseManifest.Entry(crc, version, files, archiveSize, whirlpool));
 		}
 
 		/* return the table */
@@ -178,8 +181,8 @@ public final class Cache implements Closeable {
 	 * @throws IOException
 	 *             if an I/O error occurred.
 	 */
-	public Container read(CacheIndex index, ConfigArchive archive) throws IOException {
-		return read(index.getID(), archive.getID());
+	public Container read(ArchiveType index, FolderType archive) throws IOException {
+		return read(index.getId(), archive.getID());
 	}
 
 	/**
@@ -193,8 +196,8 @@ public final class Cache implements Closeable {
 	 * @throws IOException
 	 *             if an I/O error occurred.
 	 */
-	public Container read(CacheIndex index, int file) throws IOException {
-		return read(index.getID(), file);
+	public Container read(ArchiveType index, int file) throws IOException {
+		return read(index.getId(), file);
 	}
 
 	/**
@@ -256,15 +259,15 @@ public final class Cache implements Closeable {
 		/* grab the container and the reference table */
 		Container container = read(type, file);
 		Container tableContainer = Container.decode(store.read(255, type));
-		ReferenceTable table = ReferenceTable.decode(tableContainer.getData());
+		ArchiveManifest table = ArchiveManifest.decode(tableContainer.getData());
 
 		/* check if the file/member are valid */
-		ReferenceTable.Entry entry = table.getEntry(file);
+		ArchiveManifest.FolderManifest entry = table.getEntry(file);
 		if (entry == null || member < 0 || member >= entry.capacity())
 			throw new FileNotFoundException();
 
 		/* extract the entry from the archive */
-		Archive archive = Archive.decode(container.getData(), entry.capacity());
+		Folder archive = Folder.decode(container.getData(), entry.capacity());
 		return archive.getEntry(member);
 	}
 
@@ -280,7 +283,7 @@ public final class Cache implements Closeable {
 	 */
 	public int getFileId(int type, String name) throws IOException {
 		if (!identifiers.containsKey(name)) {
-			ReferenceTable table = references[type];
+			ArchiveManifest table = references[type];
 			identifiers.put(name, table.getIdentifiers().getFile(Djb2.hash(name)));
 		}
 		
@@ -289,7 +292,7 @@ public final class Cache implements Closeable {
 	}
 
 	/**
-	 * Writes a file to the cache and updates the {@link ReferenceTable} that it
+	 * Writes a file to the cache and updates the {@link ArchiveManifest} that it
 	 * is associated with.
 	 * 
 	 * @param type
@@ -306,7 +309,7 @@ public final class Cache implements Closeable {
 	}
 	
 	/**
-	 * Writes a file to the cache and updates the {@link ReferenceTable} that it
+	 * Writes a file to the cache and updates the {@link ArchiveManifest} that it
 	 * is associated with.
 	 * 
 	 * @param type
@@ -330,7 +333,7 @@ public final class Cache implements Closeable {
 
 		/* decode the reference table for this index */
 		Container tableContainer = Container.decode(store.read(255, type));
-		ReferenceTable table = ReferenceTable.decode(tableContainer.getData());
+		ArchiveManifest table = ArchiveManifest.decode(tableContainer.getData());
 
 		/* grab the bytes we need for the checksum */
 		ByteBuffer buffer = container.encode(keys);
@@ -350,17 +353,17 @@ public final class Cache implements Closeable {
 		crc.update(bytes, 0, bytes.length);
 
 		/* update the version and checksum for this file */
-		ReferenceTable.Entry entry = table.getEntry(file);
+		ArchiveManifest.FolderManifest entry = table.getEntry(file);
 		if (entry == null) {
 			/* create a new entry for the file */
-			entry = new ReferenceTable.Entry(file);
+			entry = new ArchiveManifest.FolderManifest(file);
 			table.putEntry(file, entry);
 		}
 		entry.setVersion(container.getVersion());
 		entry.setCrc((int) crc.getValue());
 
 		/* calculate and update the whirlpool digest if we need to */
-		if ((table.getFlags() & ReferenceTable.FLAG_WHIRLPOOL) != 0) {
+		if ((table.getFlags() & ArchiveManifest.FLAG_WHIRLPOOL) != 0) {
 			byte[] whirlpool = Whirlpool.whirlpool(bytes, 0, bytes.length);
 			entry.setWhirlpool(whirlpool);
 		}
@@ -413,42 +416,42 @@ public final class Cache implements Closeable {
 	public void write(int type, int file, int member, ByteBuffer data, int[] keys) throws IOException {
 		/* grab the reference table */
 		Container tableContainer = Container.decode(store.read(255, type));
-		ReferenceTable table = ReferenceTable.decode(tableContainer.getData());
+		ArchiveManifest table = ArchiveManifest.decode(tableContainer.getData());
 
 		/* create a new entry if necessary */
-		ReferenceTable.Entry entry = table.getEntry(file);
+		ArchiveManifest.FolderManifest entry = table.getEntry(file);
 		int oldArchiveSize = -1;
 		if (entry == null) {
-			entry = new ReferenceTable.Entry(file);
+			entry = new ArchiveManifest.FolderManifest(file);
 			table.putEntry(file, entry);
 		} else {
 			oldArchiveSize = entry.capacity();
 		}
 
 		/* add a child entry if one does not exist */
-		ReferenceTable.ChildEntry child = entry.getEntry(member);
+		ArchiveManifest.PackManifest child = entry.getEntry(member);
 		if (child == null) {
-			child = new ReferenceTable.ChildEntry(member);
+			child = new ArchiveManifest.PackManifest(member);
 			entry.putEntry(member, child);
 		}
 
 		/* extract the current archive into memory so we can modify it */
-		Archive archive;
+		Folder archive;
 		int containerType, containerVersion;
 		if (file < store.getFileCount(type) && oldArchiveSize != -1) {
 			Container container = read(type, file);
 			containerType = container.getType();
 			containerVersion = container.getVersion();
-			archive = Archive.decode(container.getData(), oldArchiveSize);
+			archive = Folder.decode(container.getData(), oldArchiveSize);
 		} else {
 			containerType = Container.COMPRESSION_GZIP;
 			containerVersion = 1;
-			archive = new Archive(member + 1);
+			archive = new Folder(member + 1);
 		}
 
 		/* expand the archive if it is not large enough */
 		if (member >= archive.size()) {
-			Archive newArchive = new Archive(member + 1);
+			Folder newArchive = new Folder(member + 1);
 			for (int id = 0; id < archive.size(); id++) {
 				newArchive.putEntry(id, archive.getEntry(id));
 			}
@@ -461,7 +464,7 @@ public final class Cache implements Closeable {
 		/* create 'dummy' entries */
 		for (int id = 0; id < archive.size(); id++) {
 			if (archive.getEntry(id) == null) {
-				entry.putEntry(id, new ReferenceTable.ChildEntry(id));
+				entry.putEntry(id, new ArchiveManifest.PackManifest(id));
 				archive.putEntry(id, ByteBuffer.allocate(1));
 			}
 		}
