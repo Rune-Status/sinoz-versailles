@@ -14,7 +14,7 @@ case class Experience(private val value: Double) extends AnyVal {
     if (newAmount >= Experience.Max.value) {
       Experience.Max
     } else {
-      copy(value = value + gain.value)
+      copy(value = newAmount)
     }
   }
 
