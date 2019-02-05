@@ -1,3 +1,9 @@
+## February 6th 2019: 00:53:03
+
+-   It is unfortunate that the ZIO-wrapped Scalaz NIO isn't released
+    yet. Until a release is made, it is wise to stick to using Netty
+    and manually wrap the side effects with ZIO's IO monad.
+
 ## February 3rd 2019: 21:29:18
 
 -   The system is split up in two separate layers:
