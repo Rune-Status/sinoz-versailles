@@ -12,21 +12,21 @@ object CombatLevel {
     val ranged = set(Skill.Ranged).maxLevel.toValue
     val magic = set(Skill.Magic).maxLevel.toValue
 
-    var combat = (((defence + hitpoints + prayer / 2) * 0.25) + 1).toInt
+    val combat = (((defence + hitpoints + prayer / 2) * 0.25) + 1).toInt
 
     val melee: Double = (attack + strength) * 0.325
     val ranger: Double = Math.floor(ranged * 1.5) * 0.325
     val mager: Double = Math.floor(magic * 1.5) * 0.325
 
     if (melee >= ranger && melee >= mager) {
-      combat += melee.toInt
+      CombatLevel(Level(combat + melee.toInt))
     } else if (ranger >= melee && ranger >= mager) {
-      combat += ranger.toInt
+      CombatLevel(Level(combat + ranger.toInt))
     } else if (mager >= melee && mager >= ranger) {
-      combat += mager.toInt
+      CombatLevel(Level(combat + mager.toInt))
+    } else {
+      CombatLevel(Level(combat))
     }
-
-    CombatLevel(Level(combat))
   }
 }
 
