@@ -37,5 +37,11 @@ object CombatLevel {
 case class CombatLevel(private val level: Level) {
   def reevaluate(set: Vector[Skill]) = CombatLevel.evaluate(set)
 
+  def >(other: CombatLevel) = toValue > other.toValue
+  def >=(other: CombatLevel) = toValue >= other.toValue
+
+  def <(other: CombatLevel) = toValue < other.toValue
+  def <=(other: CombatLevel) = toValue <= other.toValue
+
   def toValue = level.toValue
 }
