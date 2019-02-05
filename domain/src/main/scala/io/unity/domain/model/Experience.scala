@@ -1,6 +1,40 @@
 package io.unity.domain.model
 
 object Experience {
+  def computeLevelAtExperience(targetExperience: Double): Level = {
+    var points = 0
+    var output = 0
+    var level = Skill.MinLevel
+    while (level <= Skill.MaxLevel) {
+      points += Math.floor(level + 300.0D * Math.pow(2.0, level / 7.0)).toInt
+      output = Math.floor(points / 4).toInt
+      if (output >= (targetExperience + 1)) {
+        return Level(level)
+      }
+
+      level += 1
+    }
+
+    Level(Skill.MaxLevel)
+  }
+
+  def computeExperienceAtLevel(targetLevel: Int): Experience = {
+    var points = 0
+    var output = 0
+    var level = Skill.MinLevel
+    while (level <= Skill.MaxLevel) {
+      points += Math.floor(targetLevel + 300.0D * Math.pow(2.0, level / 7.0)).toInt
+      if (level >= targetLevel) {
+        return Experience(output)
+      }
+
+      output = Math.floor(points / 4).toInt
+      level += 1
+    }
+
+    Experience(0)
+  }
+
   val Max = Experience(200000000)
 }
 

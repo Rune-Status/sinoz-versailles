@@ -13,6 +13,9 @@ object Skill {
   val Magic: Type = 6
 
   val CombatSkills = Attack to Magic
+
+  val MinLevel = 1
+  val MaxLevel = 99
 }
 
 /**
