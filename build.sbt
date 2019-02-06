@@ -46,8 +46,9 @@ lazy val application = project("application")
         
         "org.scalaz" %% "scalaz-zio" % zioVersion,
         "org.scalaz" %% "scalaz-zio-interop" % zioInteropVersion,
+
+        "io.netty" % "netty-all" % nettyVersion,
         
-        "io.netty" % "netty-buffer" % nettyVersion,
         "com.typesafe" % "config" % typesafeConfigVersion,
         "com.twitter" %% "util-collection" % twitterUtilVersion
       )
