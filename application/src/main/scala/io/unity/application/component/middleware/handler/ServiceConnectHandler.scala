@@ -38,7 +38,7 @@ final class ServiceConnectHandler(expectedVersion: ClientVersion) extends Channe
     // to be read in blocks of 4 bytes, so let's have FixedLengthFrameDecoder
     // make sure data comes in blocks of 4 bytes so AssetFolderRequestDecoder
     // doesn't have to
-    ctx.pipeline().addBefore("handler", "frame-decoder", new FixedLengthFrameDecoder(4))
+    ctx.pipeline().addBefore("decoder", "frame-decoder", new FixedLengthFrameDecoder(4))
     ctx.pipeline().replace("decoder", "decoder", new AssetFolderRequestDecoder)
 
     ctx.pipeline().replace("encoder", "encoder", new AssetFolderEjectionEncoder)
