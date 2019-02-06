@@ -1,8 +1,12 @@
 package io.unity.application.launch
 
+import java.net.InetSocketAddress
 import java.nio.file.{Path, Paths}
 
 import com.redis.RedisClient
+import io.netty.channel.ChannelInitializer
+import io.netty.channel.socket.SocketChannel
+import io.unity.application.component.middleware.Server
 import io.unity.application.storage.{Cache, FileStore}
 import org.slf4j.LoggerFactory
 import scalaz.zio.duration._
@@ -42,12 +46,45 @@ object UnityLauncher extends App {
       cache         <- loadAssetStorage(config.storagePath)
       _             <- info(s"Loaded asset storage that's located at ${config.storagePath}")
 
+      redisClient   <- connectToRedis
+      server        <- setupServerComponent
+
+      _             <- server.awaitTermination
+    } yield ()
+
+  /** Sets up the [[Server]] component. */
+  private def setupServerComponent =
+    for {
+      server        <- Server.create
+
+      eventLoop     <- server.createDefaultEventLoopGroup
+      bootstrap     <- server.createBootstrap(eventLoop, eventLoop, createChannelInitializer())
+
+      port          <- getServerPort
+      address       <- IO.succeed(new InetSocketAddress(port))
+
+      _             <- server.ignite(bootstrap, address)
+      _             <- info(s"Server ready to accept incoming connections at $address")
+    } yield server
+
+  /** Produces a new [[ChannelInitializer]]. */
+  private def createChannelInitializer() =
+    new ChannelInitializer[SocketChannel]() {
+      override def initChannel(ch: SocketChannel) = {
+        println("Hello World")
+      }
+    }
+
+  /** Attempts to connect to a Redis server using the details stored in the
+    * environment variables. */
+  private def connectToRedis =
+    for {
       memStoreHost  <- getInMemoryStoreHost
       memStorePort  <- getInMemoryStorePort
 
-      redisClient   <- connectToRedisServer(memStoreHost, memStorePort)
+      redisClient   <- createRedisClient(memStoreHost, memStorePort)
       _             <- info(s"Connected to in-memory store at $memStoreHost:$memStorePort")
-    } yield ()
+    } yield redisClient
 
   /** Attempts to load a [[UnityConfig]] from a local configuration file
     * on disk. */
@@ -58,9 +95,9 @@ object UnityLauncher extends App {
   private def loadAssetStorage(path: Path) =
     IO.sync(new Cache(FileStore.open(path.toFile)))
 
-  /** Attempts to synchronously connect to a local or remote Redis server using
-    * the specified details. */
-  private def connectToRedisServer(host: String, port: Int) =
+  /** Produces a new [[RedisClient]] which is to automatically connect to a
+    * local or remote Redis server using the specified details. */
+  private def createRedisClient(host: String, port: Int) =
     IO.sync(new RedisClient(host, port))
 
   /** Retrieves the host of the in-memory store from the environment variables.
@@ -74,6 +111,15 @@ object UnityLauncher extends App {
     system
       .env("UNITY_MEMSTORE_PORT")
       .map(_.getOrElse("6379"))
+      .map(_.toInt)
+
+  /** Retrieves the port of the middleware server from the environment
+    * variables. If the environment variable isn't set, a default is
+    * returned. */
+  private def getServerPort =
+    system
+      .env("UNITY_PORT")
+      .map(_.getOrElse("43594"))
       .map(_.toInt)
 
   /** Logs the given info message. */
