@@ -5,5 +5,5 @@ package io.unity.application.model
   * @author Sino
   */
 case class Folder(private val value: Int) extends AnyVal {
-  // TODO
+  def toValue = value
 }

@@ -7,6 +7,9 @@ import com.redis.RedisClient
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.socket.SocketChannel
 import io.unity.application.component.middleware.Server
+import io.unity.application.component.middleware.encoding.{ServiceConnectDecoder, ServiceResponseEncoder}
+import io.unity.application.component.middleware.handler.ServiceConnectHandler
+import io.unity.application.model.ClientVersion
 import io.unity.application.storage.{Cache, FileStore}
 import org.slf4j.LoggerFactory
 import scalaz.zio.duration._
@@ -47,18 +50,18 @@ object UnityLauncher extends App {
       _             <- info(s"Loaded asset storage that's located at ${config.storagePath}")
 
       redisClient   <- connectToRedis
-      server        <- setupServerComponent
+      server        <- setupServerComponent(config.clientVersion)
 
       _             <- server.awaitTermination
     } yield ()
 
   /** Sets up the [[Server]] component. */
-  private def setupServerComponent =
+  private def setupServerComponent(clientVersion: ClientVersion) =
     for {
       server        <- Server.create
 
       eventLoop     <- server.createDefaultEventLoopGroup
-      bootstrap     <- server.createBootstrap(eventLoop, eventLoop, createChannelInitializer())
+      bootstrap     <- server.createBootstrap(eventLoop, eventLoop, createChannelInitializer(clientVersion))
 
       port          <- getServerPort
       address       <- IO.succeed(new InetSocketAddress(port))
@@ -68,10 +71,12 @@ object UnityLauncher extends App {
     } yield server
 
   /** Produces a new [[ChannelInitializer]]. */
-  private def createChannelInitializer() =
+  private def createChannelInitializer(expectedVersion: ClientVersion) =
     new ChannelInitializer[SocketChannel]() {
       override def initChannel(ch: SocketChannel) = {
-        println("Hello World")
+        ch.pipeline().addLast("decoder", new ServiceConnectDecoder)
+        ch.pipeline().addLast("encoder", new ServiceResponseEncoder)
+        ch.pipeline().addLast("handler", new ServiceConnectHandler(expectedVersion))
       }
     }
 
