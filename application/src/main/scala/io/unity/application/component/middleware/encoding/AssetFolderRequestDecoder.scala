@@ -29,7 +29,7 @@ final class AssetFolderRequestDecoder extends ByteToMessageDecoder {
         out.add(RequestAssetFolder(archive, folder, urgent))
 
       case 2 =>
-        out.add(AcknowledgeClientStateChange(ClientState.LoggedIn))
+        out.add(AcknowledgeClientStateChange(ClientState.LoggingIn))
         in.skipBytes(3)
 
       case 3 =>
