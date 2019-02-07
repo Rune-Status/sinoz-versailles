@@ -6,11 +6,15 @@ import java.nio.file.{Path, Paths}
 import com.redis.RedisClient
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.socket.SocketChannel
+import io.unity.application.cache.{CharacterCache, RedisCharacterCache}
 import io.unity.application.component.middleware.Server
 import io.unity.application.component.middleware.encoding.{ServiceConnectDecoder, ServiceResponseEncoder}
 import io.unity.application.component.middleware.handler.ServiceConnectHandler
-import io.unity.application.model.ClientVersion
+import io.unity.application.model.{ClientVersion, CredentialBlockKeySet}
+import io.unity.application.repository.{PostgresAccountRepository, PostgresCharacterRepository}
+import io.unity.application.service.{AccountService, AuthenticationService, CharacterService, LoginService}
 import io.unity.application.storage.{Cache, FileStore}
+import io.unity.domain.model.{AccountRepository, CharacterRepository}
 import org.slf4j.LoggerFactory
 import scalaz.zio.duration._
 import scalaz.zio.{App, IO, system}
@@ -41,27 +45,51 @@ object UnityLauncher extends App {
     * up the server to deal with requests. */
   private def launch: IO[Exception, Unit] =
     for {
-      _             <- info("Starting Unity...")
+      _               <- info("Starting Unity...")
 
-      config        <- loadUnityConfig(pathToUnityConfig)
-      _             <- info(s"Expected client version: ${config.clientVersion}")
+      config          <- loadUnityConfig(pathToUnityConfig)
+      _               <- info(s"Expected client version: ${config.clientVersion}")
 
-      cache         <- loadAssetStorage(config.storagePath)
-      _             <- info(s"Loaded asset storage that's located at ${config.storagePath}")
+      cache           <- loadAssetStorage(config.storagePath)
+      _               <- info(s"Loaded asset storage that's located at ${config.storagePath}")
 
-      redisClient   <- connectToRedis
-      server        <- setupServerComponent(config.clientVersion)
+      archiveCount    <- IO.succeed(cache.getArchiveCount)
 
-      _             <- server.awaitTermination
+      accountService  <- setupAccountService(new PostgresAccountRepository)
+      charService     <- setupCharacterService(new PostgresCharacterRepository, new RedisCharacterCache)
+
+      authService     <- setupAuthenticationService(accountService)
+      loginService    <- setupLoginService(authService, charService)
+
+      redisClient     <- connectToRedis
+      server          <- setupServerComponent(loginService, config.clientVersion, archiveCount, config.credentialsKeySet)
+
+      _               <- server.awaitTermination
     } yield ()
 
+  /** Constructs a new [[CharacterService]]. */
+  private def setupCharacterService(permanentStorage: CharacterRepository, cache: CharacterCache) =
+    IO.succeed(new CharacterService(permanentStorage, cache))
+
+  /** Constructs a new [[AccountService]]. */
+  private def setupAccountService(repository: AccountRepository) =
+    IO.succeed(new AccountService(repository))
+
+  /** Constructs a new [[AuthenticationService]]. */
+  private def setupAuthenticationService(accountService: AccountService) =
+    IO.succeed(new AuthenticationService(accountService))
+
+  /** Constructs a new [[LoginService]]. */
+  private def setupLoginService(authService: AuthenticationService, charService: CharacterService) =
+    IO.succeed(new LoginService(authService, charService))
+
   /** Sets up the [[Server]] component. */
-  private def setupServerComponent(clientVersion: ClientVersion) =
+  private def setupServerComponent(loginService: LoginService, expectedVersion: ClientVersion, archiveCount: Int, credentialsKeySet: CredentialBlockKeySet) =
     for {
       server        <- Server.create
 
       eventLoop     <- server.createDefaultEventLoopGroup
-      bootstrap     <- server.createBootstrap(eventLoop, eventLoop, createChannelInitializer(clientVersion))
+      bootstrap     <- server.createBootstrap(eventLoop, eventLoop, createChannelInitializer(loginService, expectedVersion, archiveCount, credentialsKeySet))
 
       port          <- getServerPort
       address       <- IO.succeed(new InetSocketAddress(port))
@@ -71,12 +99,12 @@ object UnityLauncher extends App {
     } yield server
 
   /** Produces a new [[ChannelInitializer]]. */
-  private def createChannelInitializer(expectedVersion: ClientVersion) =
+  private def createChannelInitializer(loginService: LoginService, expectedVersion: ClientVersion, archiveCount: Int, credentialsKeySet: CredentialBlockKeySet) =
     new ChannelInitializer[SocketChannel]() {
       override def initChannel(ch: SocketChannel) = {
         ch.pipeline().addLast("decoder", new ServiceConnectDecoder)
         ch.pipeline().addLast("encoder", new ServiceResponseEncoder)
-        ch.pipeline().addLast("handler", new ServiceConnectHandler(expectedVersion))
+        ch.pipeline().addLast("handler", new ServiceConnectHandler(loginService, expectedVersion, archiveCount, credentialsKeySet))
       }
     }
 

@@ -3,17 +3,18 @@ package io.unity.application.component.middleware.handler
 import io.netty.channel.{ChannelFutureListener, ChannelHandlerContext, ChannelInboundHandlerAdapter}
 import io.netty.handler.codec.FixedLengthFrameDecoder
 import io.unity.application.command.{ConnectToAssetService, ConnectToLoginService}
-import io.unity.application.component.middleware.encoding.{AssetFolderEjectionEncoder, AssetFolderRequestDecoder}
+import io.unity.application.component.middleware.encoding.{AssetFolderEjectionEncoder, AssetFolderRequestDecoder, LoginRequestDecoder, LoginResponseEncoder}
 import io.unity.application.event.ServiceResponse
 import io.unity.application.event.ServiceResponse.{ClientOutOfDate, MayProceed}
-import io.unity.application.model.{ClientVersion, Nonce}
+import io.unity.application.model.{ClientVersion, CredentialBlockKeySet, Nonce}
+import io.unity.application.service.LoginService
 
 /**
   * The application logic handler that decides what to do with messages
   * related to service connect attempts.
   * @author Sino
   */
-final class ServiceConnectHandler(expectedVersion: ClientVersion) extends ChannelInboundHandlerAdapter {
+final class ServiceConnectHandler(loginService: LoginService, expectedVersion: ClientVersion, archiveCount: Int, credentialsKeySet: CredentialBlockKeySet) extends ChannelInboundHandlerAdapter {
   override def channelRead(ctx: ChannelHandlerContext, msg: Any): Unit =
     msg match {
       case ConnectToAssetService(version) => onAssetServiceConnect(ctx, version)
@@ -65,6 +66,9 @@ final class ServiceConnectHandler(expectedVersion: ClientVersion) extends Channe
 
     ctx.writeAndFlush(MayProceed(Some(nonce)))
 
-    // TODO replace pipeline handlers
+    ctx.pipeline().replace("decoder", "decoder", new LoginRequestDecoder(archiveCount, credentialsKeySet))
+    ctx.pipeline().replace("encoder", "encoder", new LoginResponseEncoder)
+
+    ctx.pipeline().replace("handler", "handler", new LoginRequestHandler(loginService))
   }
 }
