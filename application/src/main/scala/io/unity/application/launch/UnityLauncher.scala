@@ -60,51 +60,51 @@ object UnityLauncher extends App {
 
       redisClient     <- connectToRedis
 
-      accountService  <- setupAccountService(new PostgresAccountRepository)
-      charService     <- setupCharacterService(new PostgresCharacterRepository, new RedisCharacterCache)
+      accounts        <- setupAccountComponent(new PostgresAccountRepository)
+      characters      <- setupCharacterComponent(new PostgresCharacterRepository, new RedisCharacterCache)
 
-      friendService   <- setupFriendService(new PostgresFriendRepository, new PostgresIgnoredRepository)
-      clanService     <- setupClanService(new PostgresClanRepository)
+      friends         <- setupFriendComponent(new PostgresFriendRepository, new PostgresIgnoredRepository)
+      clans           <- setupClanComponent(new PostgresClanRepository)
 
-      authService     <- setupAuthenticationService(accountService)
-      loginService    <- setupLoginService(authService, charService)
+      auth            <- setupAuthenticationComponent(accounts)
+      login           <- setupLoginComponent(auth, characters)
 
-      server          <- setupServerComponent(loginService, config.clientVersion, archiveCount, config.credentialsKeySet)
+      server          <- setupServerComponent(login, config.clientVersion, archiveCount, config.credentialsKeySet)
 
       _               <- server.awaitTermination
     } yield ()
 
   /** Constructs a new [[CharacterService]]. */
-  private def setupCharacterService(permanentStorage: CharacterRepository, cache: CharacterCache) =
+  private def setupCharacterComponent(permanentStorage: CharacterRepository, cache: CharacterCache) =
     IO.succeed(new CharacterService(permanentStorage, cache))
 
   /** Constructs a new [[AccountService]]. */
-  private def setupAccountService(repository: AccountRepository) =
+  private def setupAccountComponent(repository: AccountRepository) =
     IO.succeed(new AccountService(repository))
 
   /** Constructs a new [[ClanService]]. */
-  private def setupClanService(repository: ClanRepository) =
+  private def setupClanComponent(repository: ClanRepository) =
     IO.succeed(new ClanService(repository))
 
   /** Constructs a new [[FriendService]]. */
-  private def setupFriendService(friendRepo: FriendRepository, ignoreRepo: IgnoredRepository) =
+  private def setupFriendComponent(friendRepo: FriendRepository, ignoreRepo: IgnoredRepository) =
     IO.succeed(new FriendService(friendRepo, ignoreRepo))
 
   /** Constructs a new [[AuthenticationService]]. */
-  private def setupAuthenticationService(accountService: AccountService) =
-    IO.succeed(new AuthenticationService(accountService))
+  private def setupAuthenticationComponent(accounts: AccountService) =
+    IO.succeed(new AuthenticationService(accounts))
 
   /** Constructs a new [[LoginService]]. */
-  private def setupLoginService(authService: AuthenticationService, charService: CharacterService) =
-    IO.succeed(new LoginService(authService, charService))
+  private def setupLoginComponent(auth: AuthenticationService, characters: CharacterService) =
+    IO.succeed(new LoginService(auth, characters))
 
   /** Sets up the [[Server]] component. */
-  private def setupServerComponent(loginService: LoginService, expectedVersion: ClientVersion, archiveCount: Int, credentialsKeySet: CredentialBlockKeySet) =
+  private def setupServerComponent(login: LoginService, expectedVersion: ClientVersion, archiveCount: Int, credentialsKeySet: CredentialBlockKeySet) =
     for {
       server        <- Server.create
 
       eventLoop     <- server.createDefaultEventLoopGroup
-      bootstrap     <- server.createBootstrap(eventLoop, eventLoop, createChannelInitializer(loginService, expectedVersion, archiveCount, credentialsKeySet))
+      bootstrap     <- server.createBootstrap(eventLoop, eventLoop, createChannelInitializer(login, expectedVersion, archiveCount, credentialsKeySet))
 
       port          <- getServerPort
       address       <- IO.succeed(new InetSocketAddress(port))
@@ -114,12 +114,12 @@ object UnityLauncher extends App {
     } yield server
 
   /** Produces a new [[ChannelInitializer]]. */
-  private def createChannelInitializer(loginService: LoginService, expectedVersion: ClientVersion, archiveCount: Int, credentialsKeySet: CredentialBlockKeySet) =
+  private def createChannelInitializer(login: LoginService, expectedVersion: ClientVersion, archiveCount: Int, credentialsKeySet: CredentialBlockKeySet) =
     new ChannelInitializer[SocketChannel]() {
       override def initChannel(ch: SocketChannel) = {
         ch.pipeline().addLast("decoder", new ServiceConnectDecoder)
         ch.pipeline().addLast("encoder", new ServiceResponseEncoder)
-        ch.pipeline().addLast("handler", new ServiceConnectHandler(loginService, expectedVersion, archiveCount, credentialsKeySet))
+        ch.pipeline().addLast("handler", new ServiceConnectHandler(login, expectedVersion, archiveCount, credentialsKeySet))
       }
     }
 
