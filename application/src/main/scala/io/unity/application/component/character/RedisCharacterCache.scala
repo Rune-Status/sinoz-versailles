@@ -1,4 +1,4 @@
-package io.unity.application.cache
+package io.unity.application.component.character
 
 import io.unity.domain.model.{CharacterProfile, Email}
 

@@ -1,4 +1,4 @@
-package io.unity.application.service
+package io.unity.application.component.game
 
 /**
   * TODO

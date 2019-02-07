@@ -1,4 +1,6 @@
-package io.unity.application.service
+package io.unity.application.component.auth
+
+import io.unity.application.component.account.AccountService
 
 /**
   * A service that is in charge of authenticating users logging into

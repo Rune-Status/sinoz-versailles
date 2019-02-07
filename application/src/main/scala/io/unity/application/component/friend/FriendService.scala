@@ -1,4 +1,4 @@
-package io.unity.application.service
+package io.unity.application.component.friend
 
 import io.unity.domain.model.{FriendRepository, IgnoredRepository}
 

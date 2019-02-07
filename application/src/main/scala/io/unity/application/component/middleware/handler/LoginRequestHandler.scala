@@ -2,7 +2,7 @@ package io.unity.application.component.middleware.handler
 
 import io.netty.channel.{ChannelHandlerContext, SimpleChannelInboundHandler}
 import io.unity.application.command.RequestLogin
-import io.unity.application.service.LoginService
+import io.unity.application.component.login.LoginService
 
 /**
   * The application logic handler that serves as the mediator between the

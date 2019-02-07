@@ -1,6 +1,5 @@
-package io.unity.application.service
+package io.unity.application.component.character
 
-import io.unity.application.cache.CharacterCache
 import io.unity.domain.model.{CharacterRepository, Email}
 
 /**

@@ -1,4 +1,4 @@
-package io.unity.application.repository
+package io.unity.application.component.character
 
 import io.unity.domain.model
 import io.unity.domain.model.{CharacterRepository, Email}

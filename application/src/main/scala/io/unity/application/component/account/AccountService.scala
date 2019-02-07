@@ -1,4 +1,4 @@
-package io.unity.application.service
+package io.unity.application.component.account
 
 import io.unity.domain.model.{Account, AccountRepository, Email}
 

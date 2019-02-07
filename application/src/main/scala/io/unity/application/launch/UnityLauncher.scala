@@ -6,15 +6,18 @@ import java.nio.file.{Path, Paths}
 import com.redis.RedisClient
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.socket.SocketChannel
-import io.unity.application.cache.{CharacterCache, RedisCharacterCache}
+import io.unity.application.component.account.{AccountService, PostgresAccountRepository}
+import io.unity.application.component.auth.AuthenticationService
+import io.unity.application.component.character.{CharacterCache, CharacterService, PostgresCharacterRepository, RedisCharacterCache}
+import io.unity.application.component.clan.{ClanService, PostgresClanRepository}
+import io.unity.application.component.friend.{FriendService, PostgresFriendRepository, PostgresIgnoredRepository}
+import io.unity.application.component.login.LoginService
 import io.unity.application.component.middleware.Server
 import io.unity.application.component.middleware.encoding.{ServiceConnectDecoder, ServiceResponseEncoder}
 import io.unity.application.component.middleware.handler.ServiceConnectHandler
 import io.unity.application.model.{ClientVersion, CredentialBlockKeySet}
-import io.unity.application.repository.{PostgresAccountRepository, PostgresCharacterRepository}
-import io.unity.application.service.{AccountService, AuthenticationService, CharacterService, LoginService}
 import io.unity.application.storage.{Cache, FileStore}
-import io.unity.domain.model.{AccountRepository, CharacterRepository}
+import io.unity.domain.model._
 import org.slf4j.LoggerFactory
 import scalaz.zio.duration._
 import scalaz.zio.{App, IO, system}
@@ -55,13 +58,17 @@ object UnityLauncher extends App {
 
       archiveCount    <- IO.succeed(cache.getArchiveCount)
 
+      redisClient     <- connectToRedis
+
       accountService  <- setupAccountService(new PostgresAccountRepository)
       charService     <- setupCharacterService(new PostgresCharacterRepository, new RedisCharacterCache)
+
+      friendService   <- setupFriendService(new PostgresFriendRepository, new PostgresIgnoredRepository)
+      clanService     <- setupClanService(new PostgresClanRepository)
 
       authService     <- setupAuthenticationService(accountService)
       loginService    <- setupLoginService(authService, charService)
 
-      redisClient     <- connectToRedis
       server          <- setupServerComponent(loginService, config.clientVersion, archiveCount, config.credentialsKeySet)
 
       _               <- server.awaitTermination
@@ -74,6 +81,14 @@ object UnityLauncher extends App {
   /** Constructs a new [[AccountService]]. */
   private def setupAccountService(repository: AccountRepository) =
     IO.succeed(new AccountService(repository))
+
+  /** Constructs a new [[ClanService]]. */
+  private def setupClanService(repository: ClanRepository) =
+    IO.succeed(new ClanService(repository))
+
+  /** Constructs a new [[FriendService]]. */
+  private def setupFriendService(friendRepo: FriendRepository, ignoreRepo: IgnoredRepository) =
+    IO.succeed(new FriendService(friendRepo, ignoreRepo))
 
   /** Constructs a new [[AuthenticationService]]. */
   private def setupAuthenticationService(accountService: AccountService) =

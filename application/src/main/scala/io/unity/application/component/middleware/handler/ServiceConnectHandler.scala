@@ -3,11 +3,11 @@ package io.unity.application.component.middleware.handler
 import io.netty.channel.{ChannelFutureListener, ChannelHandlerContext, ChannelInboundHandlerAdapter}
 import io.netty.handler.codec.FixedLengthFrameDecoder
 import io.unity.application.command.{ConnectToAssetService, ConnectToLoginService}
+import io.unity.application.component.login.LoginService
 import io.unity.application.component.middleware.encoding.{AssetFolderEjectionEncoder, AssetFolderRequestDecoder, LoginRequestDecoder, LoginResponseEncoder}
 import io.unity.application.event.ServiceResponse
 import io.unity.application.event.ServiceResponse.{ClientOutOfDate, MayProceed}
 import io.unity.application.model.{ClientVersion, CredentialBlockKeySet, Nonce}
-import io.unity.application.service.LoginService
 
 /**
   * The application logic handler that decides what to do with messages
