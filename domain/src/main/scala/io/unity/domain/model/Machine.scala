@@ -29,6 +29,8 @@ object Machine {
 
     /** The type of vendor.  */
     object Vendor {
+      case object Apple extends Type
+      case object Oracle extends Type
       case object Microsoft extends Type
       case object Sun extends Type
       case object Other extends Type

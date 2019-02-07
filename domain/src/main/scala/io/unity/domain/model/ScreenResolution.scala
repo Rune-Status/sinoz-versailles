@@ -6,5 +6,6 @@ package io.unity.domain.model
   */
 case class ScreenResolution(
   pixelsWidth: Int,
-  pixelsHeight: Int
+  pixelsHeight: Int,
+  resizable: Boolean
 )
