@@ -6,7 +6,7 @@ package io.unity.application.model
   */
 object ClientState {
   case object LoggedOut extends Type
-  case object LoggedIn extends Type
+  case object LoggingIn extends Type
   case object InGame extends Type
   case object Reconnecting extends Type
   sealed abstract class Type
