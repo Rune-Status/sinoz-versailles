@@ -7,6 +7,6 @@ import io.unity.application.component.account.AccountService
   * an [[io.unity.domain.model.Account]]
   * @author Sino
   */
-final class AuthenticationService(accountService: AccountService) {
+final class AuthenticationService(accountService: AccountService, passwordMatcher: PasswordMatcher) {
   // TODO
 }

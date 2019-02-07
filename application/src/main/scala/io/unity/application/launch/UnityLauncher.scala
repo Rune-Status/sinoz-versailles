@@ -7,7 +7,7 @@ import com.redis.RedisClient
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.socket.SocketChannel
 import io.unity.application.component.account.{AccountService, PostgresAccountRepository}
-import io.unity.application.component.auth.AuthenticationService
+import io.unity.application.component.auth.{AuthenticationService, BCryptPasswordMatcher, PasswordMatcher}
 import io.unity.application.component.character.{CharacterCache, CharacterService, PostgresCharacterRepository, RedisCharacterCache}
 import io.unity.application.component.clan.{ClanService, PostgresClanRepository}
 import io.unity.application.component.friend.{FriendService, PostgresFriendRepository, PostgresIgnoredRepository}
@@ -66,7 +66,7 @@ object UnityLauncher extends App {
       friends         <- setupFriendComponent(new PostgresFriendRepository, new PostgresIgnoredRepository)
       clans           <- setupClanComponent(new PostgresClanRepository)
 
-      auth            <- setupAuthenticationComponent(accounts)
+      auth            <- setupAuthenticationComponent(accounts, new BCryptPasswordMatcher)
       login           <- setupLoginComponent(auth, characters)
 
       server          <- setupServerComponent(login, config.clientVersion, archiveCount, config.credentialsKeySet)
@@ -91,8 +91,8 @@ object UnityLauncher extends App {
     IO.succeed(new FriendService(friendRepo, ignoreRepo))
 
   /** Constructs a new [[AuthenticationService]]. */
-  private def setupAuthenticationComponent(accounts: AccountService) =
-    IO.succeed(new AuthenticationService(accounts))
+  private def setupAuthenticationComponent(accounts: AccountService, passwordHasher: PasswordMatcher) =
+    IO.succeed(new AuthenticationService(accounts, passwordHasher))
 
   /** Constructs a new [[LoginService]]. */
   private def setupLoginComponent(auth: AuthenticationService, characters: CharacterService) =
