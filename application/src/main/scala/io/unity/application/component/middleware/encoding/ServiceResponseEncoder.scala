@@ -3,8 +3,8 @@ package io.unity.application.component.middleware.encoding
 import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.MessageToByteEncoder
-import io.unity.application.model.ServiceResponse
-import io.unity.application.model.ServiceResponse.MayProceed
+import io.unity.application.event.ServiceResponse
+import io.unity.application.event.ServiceResponse.MayProceed
 
 /**
   * A [[MessageToByteEncoder]] that translates [[ServiceResponse]]s

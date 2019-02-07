@@ -1,12 +1,13 @@
-package io.unity.application.model
+package io.unity.application.command
 
+import io.unity.application.model._
 import io.unity.domain.model.{Email, Machine, Password}
 
 /**
-  * A client's request to log into the game world.
+  * A client's command to log into a game world.
   * @author Sino
   */
-case class LoginRequest(
+case class RequestLogin(
   email: Email,
   password: Option[Password],
   clientState: ClientState.Type,

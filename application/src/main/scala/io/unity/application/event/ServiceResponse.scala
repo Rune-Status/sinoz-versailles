@@ -1,4 +1,6 @@
-package io.unity.application.model
+package io.unity.application.event
+
+import io.unity.application.model.Nonce
 
 /**
   * A type of response from a particular kind of application service.

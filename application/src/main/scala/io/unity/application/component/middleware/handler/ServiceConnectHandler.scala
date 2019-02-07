@@ -4,8 +4,9 @@ import io.netty.channel.{ChannelFutureListener, ChannelHandlerContext, ChannelIn
 import io.netty.handler.codec.FixedLengthFrameDecoder
 import io.unity.application.command.{ConnectToAssetService, ConnectToLoginService}
 import io.unity.application.component.middleware.encoding.{AssetFolderEjectionEncoder, AssetFolderRequestDecoder}
-import io.unity.application.model.ServiceResponse.{ClientOutOfDate, MayProceed}
-import io.unity.application.model.{ClientVersion, Nonce, ServiceResponse}
+import io.unity.application.event.ServiceResponse
+import io.unity.application.event.ServiceResponse.{ClientOutOfDate, MayProceed}
+import io.unity.application.model.{ClientVersion, Nonce}
 
 /**
   * The application logic handler that decides what to do with messages
