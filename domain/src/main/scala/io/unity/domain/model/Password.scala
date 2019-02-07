@@ -24,4 +24,6 @@ object Password {
   */
 case class Password(private val value: String) extends AnyVal {
   def isValid = Password.ValidPasswordPattern.matcher(value).find()
+
+  def toValue = value
 }
