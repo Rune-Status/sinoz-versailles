@@ -16,6 +16,7 @@ val nettyVersion = "4.1.33.Final"
 val scalaTestVersion = "3.0.5"
 
 val redisClientVersion = "3.9"
+val bcryptLibVersion = "0.4"
 
 lazy val domain = project("domain")
   .settings(commonSettings: _*)
@@ -50,7 +51,9 @@ lazy val application = project("application")
         "io.netty" % "netty-all" % nettyVersion,
         
         "com.typesafe" % "config" % typesafeConfigVersion,
-        "com.twitter" %% "util-collection" % twitterUtilVersion
+        "com.twitter" %% "util-collection" % twitterUtilVersion,
+
+        "org.mindrot" % "jbcrypt" % bcryptLibVersion
       )
       
       val test = Seq(
