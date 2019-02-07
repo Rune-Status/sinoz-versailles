@@ -3,7 +3,7 @@ package io.unity.application.launch
 import java.nio.file.{Path, Paths}
 
 import com.typesafe.config.{Config, ConfigFactory}
-import io.unity.application.model.ClientVersion
+import io.unity.application.model.{ClientVersion, CredentialBlockKeySet}
 import scalaz.zio.IO
 
 object UnityConfig {
@@ -22,7 +22,12 @@ object UnityConfig {
   private def hoconConfigToUnityConfig(config: Config): IO[Exception, UnityConfig] =
     IO.succeed(UnityConfig(
       clientVersion = ClientVersion(config.getInt("unity.client.expected-version")),
-      storagePath = Paths.get(config.getString("unity.assets.storage.path"))
+      storagePath = Paths.get(config.getString("unity.assets.storage.path")),
+
+      credentialsKeySet = CredentialBlockKeySet(
+        modulus = BigInt(config.getString("unity.client.login.credentials-block.rsa.modulus")),
+        exponent = BigInt(config.getString("unity.client.login.credentials-block.rsa.exponent")),
+      )
     ))
 
   private def loadHoconFile(path: Path): IO[Exception, Config] =
@@ -35,5 +40,6 @@ object UnityConfig {
   */
 case class UnityConfig(
   clientVersion: ClientVersion,
-  storagePath: Path
+  storagePath: Path,
+  credentialsKeySet: CredentialBlockKeySet
 )
