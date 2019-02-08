@@ -16,7 +16,7 @@ import io.unity.application.component.middleware.Server
 import io.unity.application.component.middleware.encoding.{ServiceConnectDecoder, ServiceResponseEncoder}
 import io.unity.application.component.middleware.handler.ServiceConnectHandler
 import io.unity.application.model.{ClientVersion, CredentialBlockKeySet}
-import io.unity.application.storage.{Cache, FileStore}
+import io.unity.application.storage.{Storage, FileBundle}
 import io.unity.domain.model._
 import org.slf4j.LoggerFactory
 import scalaz.zio.duration._
@@ -53,10 +53,10 @@ object UnityLauncher extends App {
       config          <- loadUnityConfig(pathToUnityConfig)
       _               <- info(s"Expected client version: ${config.clientVersion}")
 
-      cache           <- loadAssetStorage(config.storagePath)
+      storage           <- loadAssetStorage(config.storagePath)
       _               <- info(s"Loaded asset storage that's located at ${config.storagePath}")
 
-      archiveCount    <- IO.succeed(cache.getArchiveCount)
+      archiveCount    <- IO.succeed(storage.getArchiveCount)
 
       redisClient     <- connectToRedis
 
@@ -69,7 +69,7 @@ object UnityLauncher extends App {
       auth            <- setupAuthenticationComponent(accounts, new BCryptPasswordMatcher)
       login           <- setupLoginComponent(auth, characters)
 
-      server          <- setupServerComponent(login, config.clientVersion, archiveCount, config.credentialsKeySet)
+      server          <- setupServerComponent(login, config.clientVersion, storage, archiveCount, config.credentialsKeySet)
 
       _               <- server.awaitTermination
     } yield ()
@@ -99,12 +99,13 @@ object UnityLauncher extends App {
     IO.succeed(new LoginService(auth, characters))
 
   /** Sets up the [[Server]] component. */
-  private def setupServerComponent(login: LoginService, expectedVersion: ClientVersion, archiveCount: Int, credentialsKeySet: CredentialBlockKeySet) =
+  // TODO fix createChannelInitializer() terribly long parameter list
+  private def setupServerComponent(login: LoginService, expectedVersion: ClientVersion, assetStorage: Storage, archiveCount: Int, credentialsKeySet: CredentialBlockKeySet) =
     for {
       server        <- Server.create
 
       eventLoop     <- server.createDefaultEventLoopGroup
-      bootstrap     <- server.createBootstrap(eventLoop, eventLoop, createChannelInitializer(login, expectedVersion, archiveCount, credentialsKeySet))
+      bootstrap     <- server.createBootstrap(eventLoop, eventLoop, createChannelInitializer(login, expectedVersion, assetStorage, archiveCount, credentialsKeySet))
 
       port          <- getServerPort
       address       <- IO.succeed(new InetSocketAddress(port))
@@ -114,12 +115,13 @@ object UnityLauncher extends App {
     } yield server
 
   /** Produces a new [[ChannelInitializer]]. */
-  private def createChannelInitializer(login: LoginService, expectedVersion: ClientVersion, archiveCount: Int, credentialsKeySet: CredentialBlockKeySet) =
+  // TODO fix ServiceConnectHandler's terribly long dependency list
+  private def createChannelInitializer(login: LoginService, expectedVersion: ClientVersion, assetStorage: Storage, archiveCount: Int, credentialsKeySet: CredentialBlockKeySet) =
     new ChannelInitializer[SocketChannel]() {
       override def initChannel(ch: SocketChannel) = {
         ch.pipeline().addLast("decoder", new ServiceConnectDecoder)
         ch.pipeline().addLast("encoder", new ServiceResponseEncoder)
-        ch.pipeline().addLast("handler", new ServiceConnectHandler(login, expectedVersion, archiveCount, credentialsKeySet))
+        ch.pipeline().addLast("handler", new ServiceConnectHandler(login, assetStorage, expectedVersion, archiveCount, credentialsKeySet))
       }
     }
 
@@ -141,7 +143,7 @@ object UnityLauncher extends App {
 
   /** Attempts to synchronously load the asset binary storage into memory. */
   private def loadAssetStorage(path: Path) =
-    IO.sync(new Cache(FileStore.open(path.toFile)))
+    IO.sync(new Storage(FileBundle.open(path.toFile)))
 
   /** Produces a new [[RedisClient]] which is to automatically connect to a
     * local or remote Redis server using the specified details. */

@@ -1,5 +1,6 @@
 package io.unity.application.component.middleware.handler
 
+import com.twitter.conversions.StorageUnitOps._
 import io.netty.channel.{ChannelFutureListener, ChannelHandlerContext, ChannelInboundHandlerAdapter}
 import io.netty.handler.codec.FixedLengthFrameDecoder
 import io.unity.application.command.{ConnectToAssetService, ConnectToLoginService}
@@ -8,13 +9,15 @@ import io.unity.application.component.middleware.encoding.{AssetFolderEjectionEn
 import io.unity.application.event.ServiceResponse
 import io.unity.application.event.ServiceResponse.{ClientOutOfDate, MayProceed}
 import io.unity.application.model.{ClientVersion, CredentialBlockKeySet, Nonce}
+import io.unity.application.storage.Storage
 
 /**
   * The application logic handler that decides what to do with messages
   * related to service connect attempts.
   * @author Sino
   */
-final class ServiceConnectHandler(loginService: LoginService, expectedVersion: ClientVersion, archiveCount: Int, credentialsKeySet: CredentialBlockKeySet) extends ChannelInboundHandlerAdapter {
+// TODO find a different way to solve this. too many dependencies
+final class ServiceConnectHandler(loginService: LoginService, assetStorage: Storage, expectedVersion: ClientVersion, archiveCount: Int, credentialsKeySet: CredentialBlockKeySet) extends ChannelInboundHandlerAdapter {
   override def channelRead(ctx: ChannelHandlerContext, msg: Any): Unit =
     msg match {
       case ConnectToAssetService(version) => onAssetServiceConnect(ctx, version)
@@ -44,7 +47,7 @@ final class ServiceConnectHandler(loginService: LoginService, expectedVersion: C
     ctx.pipeline().replace("decoder", "decoder", new AssetFolderRequestDecoder)
 
     ctx.pipeline().replace("encoder", "encoder", new AssetFolderEjectionEncoder)
-    ctx.pipeline().replace("handler", "handler", new AssetStreamingHandler)
+    ctx.pipeline().replace("handler", "handler", new AssetStreamingHandler(assetStorage, 1024.kilobytes))
   }
 
   /** Rejects the request by writing the given [[ServiceResponse.Type]] back
