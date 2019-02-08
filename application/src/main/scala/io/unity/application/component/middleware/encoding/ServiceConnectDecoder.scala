@@ -24,15 +24,15 @@ final class ServiceConnectDecoder extends ByteToMessageDecoder {
 
     directive match {
       case LoginServiceId =>
+        out.add(ConnectToLoginService)
+
+      case AssetServiceId =>
         if (in.readableBytes() < 4) {
           in.resetReaderIndex()
           return
         }
 
         out.add(ConnectToAssetService(ClientVersion(in.readInt())))
-
-      case AssetServiceId =>
-        out.add(ConnectToLoginService)
 
       case otherwise =>
         throw new Exception(s"unexpected service connect directive of value $otherwise")
