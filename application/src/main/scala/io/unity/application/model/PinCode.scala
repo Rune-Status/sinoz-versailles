@@ -1,13 +1,20 @@
 package io.unity.application.model
 
+object PinCode {
+  val ExpectedDigitCount = 6
+}
+
 /**
-  * A five digit pincode used for two step authentication.
+  * A six digit pincode used for two step authentication.
   * @author Sino
   */
 case class PinCode(private val value: Int) extends AnyVal {
-  def isValid = {
-    val justNumbers = value.toString.replaceAll("-", "").replaceAll("+", "")
+  def isValid =
+    digitCount == PinCode.ExpectedDigitCount
 
-    justNumbers.length > 0 && justNumbers.length <= 5
-  }
+  /** Returns the amount of digits this [[PinCode]]'s [[value]] has. */
+  private def digitCount =
+    value
+      .toString
+      .length
 }
