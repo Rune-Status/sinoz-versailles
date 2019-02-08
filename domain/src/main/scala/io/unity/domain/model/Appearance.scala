@@ -29,23 +29,6 @@ object Appearance {
     feet: Int,
     skin: Int
   )
-
-  /** A skull head icon. */
-  object SkullIcon {
-    case object WildernessSkull extends Type
-    sealed abstract class Type
-  }
-
-  /** A prayer head icon. */
-  object PrayerIcon {
-    case object ProtectFromMelee extends Type
-    case object ProtectFromRanged extends Type
-    case object ProtectFromMagic extends Type
-    case object Redemption extends Type
-    case object Retribution extends Type
-    case object Smite extends Type
-    sealed abstract class Type
-  }
 }
 
 /**
