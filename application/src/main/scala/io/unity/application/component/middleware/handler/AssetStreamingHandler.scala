@@ -67,8 +67,11 @@ final class AssetStreamingHandler(assetStorage: Storage, dataLimit: StorageUnit)
       poll(ctx, urgent)
       poll(ctx, regular)
     } finally {
+      if (blockEjectionCount > 0) {
+        endOfBatch(ctx)
+      }
+
       resetBlockEjectionCount()
-      endOfBatch(ctx)
     }
   }
 
