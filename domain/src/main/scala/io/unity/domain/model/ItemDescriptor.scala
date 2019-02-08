@@ -7,5 +7,13 @@ package io.unity.domain.model
 case class ItemDescriptor(
   id: ItemId,
   name: ItemName,
-  examine: ItemTextDescription
+  examine: ItemTextDescription,
+
+  bagOptions: Vector[ItemBagOption],
+  floorOptions: Vector[ItemFloorOption],
+
+  subscriptionType: AccountSubscription.Type,
+  bankPlaceholderId: Option[ItemPlaceholderId],
+
+  stackable: Boolean,
 )
