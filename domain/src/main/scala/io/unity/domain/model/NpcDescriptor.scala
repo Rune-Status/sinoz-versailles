@@ -5,7 +5,7 @@ package io.unity.domain.model
   * @author Sino
   */
 case class NpcDescriptor(
-  id: Int,
-  name: String,
-  examine: String
+  id: NpcId,
+  name: NpcName,
+  examine: NpcTextDescription
 )

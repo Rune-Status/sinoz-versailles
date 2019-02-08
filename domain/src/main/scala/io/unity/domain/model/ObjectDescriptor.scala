@@ -5,7 +5,7 @@ package io.unity.domain.model
   * @author Sino
   */
 case class ObjectDescriptor(
-  id: Int,
-  name: String,
-  examine: String
+  id: ObjectId,
+  name: ObjectName,
+  examine: ObjectTextDescription
 )
