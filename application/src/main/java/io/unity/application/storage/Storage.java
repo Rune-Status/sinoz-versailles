@@ -33,36 +33,34 @@ import java.util.Map;
 import java.util.zip.CRC32;
 
 /**
- * The {@link Cache} class provides a unified, high-level API for modifying the
+ * The {@link Storage} class provides a unified, high-level API for modifying the
  * cache of a Jagex game.
  *
  * @author Graham
  * @author `Discardedx2
  * @author Sino
  */
-public final class Cache implements Closeable {
+public final class Storage implements Closeable {
     /**
-     * The file store that backs this cache.
+     * The {@link FileBundle} that backs this storage.
      */
-    private final FileStore store;
+    private final FileBundle store;
 
     /**
-     * The collection of {@link ArchiveManifest}s for this cache.
+     * The collection of {@link ArchiveManifest}s.
      */
     private ArchiveManifest[] archiveManifests;
 
     /**
-     * TODO
+     * Contains mappings of file names to file id's.
      */
     private final Map<String, Integer> identifiers = new HashMap<>();
 
     /**
-     * Creates a new {@link Cache} backed by the specified {@link FileStore}.
-     *
-     * @param store The {@link FileStore} that backs this {@link Cache}.
-     * @throws IOException
+     * Creates a new {@link Storage} backed by the specified {@link FileBundle}.
+     * @param store The {@link FileBundle} that backs this {@link Storage}.
      */
-    public Cache(FileStore store) throws IOException {
+    public Storage(FileBundle store) throws IOException {
         this.store = store;
         this.archiveManifests = new ArchiveManifest[store.getArchiveCount()];
 
@@ -74,14 +72,9 @@ public final class Cache implements Closeable {
         }
     }
 
-    @Override
-    public void close() throws IOException {
-        store.close();
-    }
-
     /**
-     * Computes the {@link ReleaseManifest} for this cache. The checksum table
-     * forms part of the so-called "update keys".
+     * Computes the {@link ReleaseManifest} for this {@link Storage}.
+     * The manifest forms part of the so-called "update keys".
      *
      * @return The {@link ReleaseManifest}.
      * @throws IOException if an I/O error occurs.
@@ -133,11 +126,11 @@ public final class Cache implements Closeable {
     }
 
     /**
-     * Gets the {@link FileStore} that backs this {@link Cache}.
+     * Gets the {@link FileBundle} that backs this {@link Storage}.
      *
-     * @return The underlying file store.
+     * @return The underlying {@link FileBundle}.
      */
-    public FileStore getStore() {
+    public FileBundle getBundle() {
         return store;
     }
 
@@ -151,7 +144,7 @@ public final class Cache implements Closeable {
     }
 
     /**
-     * Reads a file from the cache.
+     * Reads a file.
      *
      * @param archiveType The type of file.
      * @param folderType The file id.
@@ -163,7 +156,7 @@ public final class Cache implements Closeable {
     }
 
     /**
-     * Reads a file from the cache.
+     * Reads a file.
      *
      * @param archiveType The type of file.
      * @param folderId The file id.
@@ -175,7 +168,7 @@ public final class Cache implements Closeable {
     }
 
     /**
-     * Reads a file from the cache.
+     * Reads a file.
      *
      * @param archiveId The type of file.
      * @param folderId The file id.
@@ -193,7 +186,7 @@ public final class Cache implements Closeable {
     }
 
     /**
-     * Reads a file from the cache.
+     * Reads a file.
      *
      * @param archiveId The type of file.
      * @param folderId The file id.
@@ -212,7 +205,7 @@ public final class Cache implements Closeable {
     }
 
     /**
-     * Reads a file contained in an archive in the cache.
+     * Reads a file contained in an archive.
      *
      * @param archiveId The type of the file.
      * @param folderId The archive id.
@@ -245,11 +238,7 @@ public final class Cache implements Closeable {
     }
 
     /**
-     * Gets a file id from the cache by name
-     *
-     * @param type The type of file.
-     * @param name The name of the file
-     * @return The file id.
+     * Looks up and returns the id of a file that has the given name.
      */
     public int getFileId(int type, String name) {
         if (!identifiers.containsKey(name)) {
@@ -262,7 +251,7 @@ public final class Cache implements Closeable {
     }
 
     /**
-     * Writes a file to the cache and updates the {@link ArchiveManifest} that it
+     * Writes a file to the file bundle and updates the {@link ArchiveManifest} that it
      * is associated with.
      *
      * @param archiveId      The type of file.
@@ -275,7 +264,7 @@ public final class Cache implements Closeable {
     }
 
     /**
-     * Writes a file to the cache and updates the {@link ArchiveManifest} that it
+     * Writes a file and updates the {@link ArchiveManifest} that it
      * is associated with.
      *
      * @param archiveId      The type of file.
@@ -337,7 +326,7 @@ public final class Cache implements Closeable {
     }
 
     /**
-     * Writes a file contained in an archive to the cache.
+     * Writes a file contained in an archive.
      *
      * @param archive   The type of file.
      * @param folder   The id of the archive.
@@ -350,7 +339,7 @@ public final class Cache implements Closeable {
     }
 
     /**
-     * Writes a file contained in an archive to the cache.
+     * Writes a file contained in an archive.
      *
      * @param archiveId   The type of file.
      * @param folderId   The id of the archive.
@@ -422,5 +411,10 @@ public final class Cache implements Closeable {
         /* and write the folder back to memory */
         Container container = new Container(containerType, folder.encode(), containerVersion);
         write(archiveId, folderId, container, keySet);
+    }
+
+    @Override
+    public void close() throws IOException {
+        store.close();
     }
 }

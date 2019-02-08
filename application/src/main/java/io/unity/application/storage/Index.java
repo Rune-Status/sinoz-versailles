@@ -26,7 +26,7 @@ import io.unity.application.storage.util.ByteBufferUtils;
 import java.nio.ByteBuffer;
 
 /**
- * An {@link Index} points to a file inside a {@link FileStore}.
+ * An {@link Index} points to a file inside a {@link FileBundle}.
  *
  * @author Graham
  * @author `Discardedx2
