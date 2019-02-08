@@ -3,7 +3,7 @@ package io.unity.application.component.auth
 import io.unity.domain.model.Password
 
 /**
-  * TODO
+  * Matches a given plain [[Password]] with its hashed variant.
   * @author Sino
   */
 trait PasswordMatcher {
