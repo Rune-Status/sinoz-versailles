@@ -20,6 +20,7 @@ case class Energy(private val units: Int) extends AnyVal {
   def -(amount: Int) =
     copy(units = Math.max(units - amount, Energy.MinUnits.units))
 
+  def toUnits = units
 
   def toPercentages = units / 100
 }
