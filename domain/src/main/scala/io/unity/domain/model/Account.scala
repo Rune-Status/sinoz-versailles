@@ -9,5 +9,6 @@ case class Account(
   displayName: DisplayName,
   previousDisplayName: Option[DisplayName],
   password: Password,
+  subscriptionType: AccountSubscription.Type,
   lastLogin: Option[LastLogin]
 )
