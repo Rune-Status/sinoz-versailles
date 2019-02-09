@@ -2,7 +2,7 @@ package io.unity.domain.model
 
 object Inventory {
   /** Constructs a new [[Inventory]] using the given [[InventoryDescriptor]]. */
-  def apply(descriptor: InventoryDescriptor, stackMode: StackMode.Type) =
+  def apply(descriptor: InventoryDescriptor, stackMode: StackMode.Type): Inventory =
     Inventory(
       descriptor = descriptor,
       stackMode = stackMode,
