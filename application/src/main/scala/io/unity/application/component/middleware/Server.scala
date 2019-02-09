@@ -24,12 +24,12 @@ final class Server(private val channelRef: Ref[Option[Channel]]) {
     * delegates connected [[Channel]]s to the given [[ChannelHandler]]. */
   def createBootstrap(parent: EventLoopGroup, child: EventLoopGroup, handler: ChannelHandler) =
     for {
-      bootstrap <- newBootstrap
+      bootstrap <- IO.succeed(newBootstrap)
 
-      _         <- IO.succeed(bootstrap.group(parent, child))
-      _         <- IO.succeed(bootstrap.childHandler(handler))
+      _         <- IO.sync(bootstrap.group(parent, child))
+      _         <- IO.sync(bootstrap.childHandler(handler))
 
-      _         <- IO.succeed(bootstrap.childOption(ChannelOption.TCP_NODELAY, java.lang.Boolean.TRUE))
+      _         <- IO.sync(bootstrap.childOption(ChannelOption.TCP_NODELAY, java.lang.Boolean.TRUE))
     } yield bootstrap
 
   /** Attempts to ignite this [[Server]] using the given [[ServerBootstrap]]
@@ -75,9 +75,9 @@ final class Server(private val channelRef: Ref[Option[Channel]]) {
     * type depends on whether E-poll is available or not. */
   private def newBootstrap =
     if (Epoll.isAvailable) {
-      IO.succeed(new ServerBootstrap().channel(classOf[EpollServerSocketChannel]))
+      new ServerBootstrap().channel(classOf[EpollServerSocketChannel])
     } else {
-      IO.succeed(new ServerBootstrap().channel(classOf[NioServerSocketChannel]))
+      new ServerBootstrap().channel(classOf[NioServerSocketChannel])
     }
 
   /** Creates an event loop group with the amount of threads being equal

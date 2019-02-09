@@ -1,4 +1,4 @@
-package io.unity.application.model
+package io.unity.domain.model
 
 /**
   * A type of world setting.

@@ -3,7 +3,7 @@ package io.unity.domain.command
 import io.unity.domain.model.Movement
 
 /**
-  * A client's command to move to a nearby tile.
+  * A command to move from one tile to another.
   * @author Sino
   */
 case class MoveToTile(

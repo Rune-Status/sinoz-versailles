@@ -23,5 +23,8 @@ case class NpcDescriptor(
   skills: Option[Vector[Skill]],
   bonuses: Option[MonsterBonuses],
 
+  clickable: Boolean,
+  showOnMinimap: Boolean,
+
   examine: NpcTextDescription
 )

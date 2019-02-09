@@ -1,13 +1,13 @@
 package io.unity.domain.event
 
-import io.unity.domain.model.UILabelColour
+import io.unity.domain.model.LabelColour
 
 /**
   * An event of the text colour within a user interface label being updated.
   * @author Sino
   */
-case class UILabelTextColourUpdated(
+case class LabelTextColourUpdated(
   interface: Int,
   component: Int,
-  colour: UILabelColour
+  colour: LabelColour
 )

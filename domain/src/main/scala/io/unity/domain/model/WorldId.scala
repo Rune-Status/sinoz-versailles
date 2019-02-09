@@ -1,4 +1,4 @@
-package io.unity.application.model
+package io.unity.domain.model
 
 /**
   * The id of a running game world.
