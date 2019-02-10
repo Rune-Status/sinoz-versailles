@@ -1,6 +1,6 @@
 val commonSettings = Seq(
   version := "0.1",
-  organization := "unity",
+  organization := "versailles",
   scalaVersion := "2.12.8"
 )
 
