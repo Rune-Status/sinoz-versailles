@@ -21,16 +21,12 @@
  */
 package io.versailles.application.storage.util;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import io.versailles.application.storage.util.bzip.CBZip2InputStream;
+import io.versailles.application.storage.util.bzip.CBZip2OutputStream;
+
+import java.io.*;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
-
-import io.unity.application.storage.util.bzip.CBZip2InputStream;
-import io.unity.application.storage.util.bzip.CBZip2OutputStream;
 
 /**
  * A class that contains methods to compress and uncompress BZIP2 and GZIP

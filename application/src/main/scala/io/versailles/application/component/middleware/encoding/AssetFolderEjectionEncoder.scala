@@ -3,7 +3,7 @@ package io.versailles.application.component.middleware.encoding
 import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.MessageToByteEncoder
-import io.unity.application.event.AssetFolderEjected
+import io.versailles.application.event.AssetFolderEjected
 
 /**
   * A [[MessageToByteEncoder]] that translates the given [[AssetFolderEjected]]

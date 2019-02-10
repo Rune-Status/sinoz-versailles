@@ -21,8 +21,8 @@
  */
 package io.versailles.application.storage;
 
-import io.unity.application.storage.util.CompressionUtils;
-import io.unity.application.storage.util.crypto.Xtea;
+import io.versailles.application.storage.util.CompressionUtils;
+import io.versailles.application.storage.util.crypto.Xtea;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
