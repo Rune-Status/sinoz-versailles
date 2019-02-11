@@ -4,23 +4,13 @@ import java.nio.file.{Path, Paths}
 
 import com.typesafe.config.{Config, ConfigFactory}
 import io.versailles.application.model.{ClientVersion, CredentialBlockKeySet}
-import scalaz.zio.IO
 
 object VersaillesConfig {
-  def load(path: Path): IO[Exception, VersaillesConfig] = {
-    val pathString = path.toString
-    if (pathString.endsWith(".conf")) {
-      for {
-        hoconConfig <- loadHoconFile(path)
-        unityConfig <- hoconConfigToVersaillesConfig(hoconConfig)
-      } yield unityConfig
-    } else {
-      IO.fail(new UnsupportedOperationException())
-    }
-  }
+  def load(path: Path) =
+    hoconConfigToVersaillesConfig(loadHoconFile(path))
 
-  private def hoconConfigToVersaillesConfig(config: Config): IO[Exception, VersaillesConfig] =
-    IO.succeed(VersaillesConfig(
+  private def hoconConfigToVersaillesConfig(config: Config) =
+    VersaillesConfig(
       clientVersion = ClientVersion(config.getInt("versailles.client.expected-version")),
       storagePath = Paths.get(config.getString("versailles.assets.storage.path")),
 
@@ -28,10 +18,10 @@ object VersaillesConfig {
         modulus = BigInt(config.getString("versailles.client.login.credentials-block.rsa.modulus")),
         exponent = BigInt(config.getString("versailles.client.login.credentials-block.rsa.exponent")),
       )
-    ))
+    )
 
-  private def loadHoconFile(path: Path): IO[Exception, Config] =
-    IO.syncException(ConfigFactory.parseFile(path.toFile))
+  private def loadHoconFile(path: Path) =
+    ConfigFactory.parseFile(path.toFile)
 }
 
 /**

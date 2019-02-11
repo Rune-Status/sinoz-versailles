@@ -7,15 +7,14 @@ val commonSettings = Seq(
 val typesafeConfigVersion = "1.3.3"
 val twitterUtilVersion = "19.1.0"
 
-val logbackVersion = "1.2.3"
+val akkaVersion = "2.5.20"
 
-val zioVersion = "0.6.0"
-val zioInteropVersion = "0.5.0"
+val logbackVersion = "1.2.3"
 
 val nettyVersion = "4.1.33.Final"
 val scalaTestVersion = "3.0.5"
 
-val redisClientVersion = "3.9"
+val redisClientVersion = "1.8.0"
 val bcryptLibVersion = "0.4"
 
 lazy val domain = project("domain")
@@ -24,7 +23,6 @@ lazy val domain = project("domain")
     libraryDependencies ++= {
       val main = Seq(
         "io.netty" % "netty-common" % nettyVersion,
-        "org.scalaz" %% "scalaz-zio" % zioVersion,
         "com.twitter" %% "util-collection" % twitterUtilVersion
       )
       
@@ -41,14 +39,14 @@ lazy val application = project("application")
   .settings(
     libraryDependencies ++= {
       val main = Seq(
-        "ch.qos.logback" % "logback-classic" % logbackVersion,
-        
-        "net.debasishg" %% "redisclient" % redisClientVersion,
-        
-        "org.scalaz" %% "scalaz-zio" % zioVersion,
-        "org.scalaz" %% "scalaz-zio-interop" % zioInteropVersion,
+        "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+        "com.typesafe.akka" %% "akka-testkit" % akkaVersion,
 
-        "io.netty" % "netty-all" % nettyVersion,
+        "com.github.etaty" %% "rediscala" % redisClientVersion,
+        
+        "ch.qos.logback" % "logback-classic" % logbackVersion,
+
+        "io.netty" % "netty-buffer" % nettyVersion,
         
         "com.typesafe" % "config" % typesafeConfigVersion,
         "com.twitter" %% "util-collection" % twitterUtilVersion,

@@ -1,12 +1,12 @@
 package io.versailles.domain.model
 
-import scalaz.zio.IO
+import scala.concurrent.Future
 
 /**
   * A repository of [[Account]]s.
   * @author Sino
   */
 trait AccountRepository {
-  def get(email: Email): IO[Exception, Option[Account]]
-  def update(email: Email, account: Account): IO[Exception, Boolean]
+  def get(email: Email): Future[Option[Account]]
+  def update(email: Email, account: Account): Future[Boolean]
 }

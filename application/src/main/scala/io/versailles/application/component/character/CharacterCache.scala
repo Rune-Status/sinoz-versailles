@@ -1,8 +1,8 @@
 package io.versailles.application.component.character
 
 import io.versailles.domain.model.{CharacterProfile, Email}
-import scalaz.zio.IO
 
+import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 
 /**
@@ -10,6 +10,6 @@ import scala.concurrent.duration.Duration
   * @author Sino
   */
 trait CharacterCache {
-  def get(email: Email): IO[Exception, Option[CharacterProfile]]
-  def put(email: Email, profile: CharacterProfile, expireAfter: Duration): IO[Exception, Boolean]
+  def get(email: Email): Future[Option[CharacterProfile]]
+  def put(email: Email, profile: CharacterProfile, expireAfter: Duration): Future[Boolean]
 }
