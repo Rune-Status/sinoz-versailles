@@ -75,10 +75,6 @@ final class Channel(connection: ActorRef, address: InetSocketAddress, bufferAllo
       upstream.discardReadBytes()
 
     case SetHandler(handlerProps) =>
-      // kill off the previous handler
-      handlerOpt.foreach(_ ! PoisonPill)
-
-      // and set the next one in charge
       handlerOpt = Some(context.actorOf(handlerProps))
 
     case SetDecoder(decoder) =>

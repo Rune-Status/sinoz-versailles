@@ -21,7 +21,7 @@ final class AssetFolderRequestDecoder extends MessageDecoder {
     directive match {
       case 0 | 1 =>
         val archive = ArchiveId(in.readUnsignedByte())
-        val folder = FolderId(in.readUnsignedByte())
+        val folder = FolderId(in.readUnsignedShort())
         val urgent = directive == 1
 
         MessageOutput(RequestAssetFolder(archive, folder, urgent))

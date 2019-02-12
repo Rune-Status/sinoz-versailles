@@ -2,13 +2,11 @@ package io.versailles.application.component.asset
 
 import com.twitter.conversions.StorageUnitOps._
 import com.twitter.util.StorageUnit
-import io.netty.buffer.{ByteBuf, Unpooled}
+import io.netty.buffer.Unpooled
 import io.versailles.application.component.middleware.encoding.buffer._
 import io.versailles.application.model.{ArchiveId, AssetFolder, FolderId}
 
-import scala.annotation.tailrec
-import scala.collection.mutable
-import scala.collection.immutable
+import scala.collection.{immutable, mutable}
 
 object FolderConveyor {
   /** The size of a single ejectable block. */
@@ -64,7 +62,7 @@ final class FolderConveyor(foldersCache: FolderPagesCache) {
   private def poll(queue: mutable.Queue[AssetFolder])(implicit blockEjectionLimit: StorageUnit) = {
     var readyForTransport = immutable.Seq.empty[AssetFolder]
 
-    while (queue.nonEmpty && !exceededBlockEjectionLimit(blockEjectionLimit)) {
+    while (queue.nonEmpty) {
       val folder = queue.dequeue()
       // TODO take N blocks from folder to eject to avoid exceeding the limit for bandwidth control, delay the rest
 
