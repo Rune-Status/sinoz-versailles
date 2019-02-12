@@ -1,8 +1,11 @@
 package io.versailles.application.component.middleware.encoding
 
 import akka.util.ByteString
+import com.twitter.conversions.StorageUnitOps._
 import com.twitter.util.StorageUnit
 import io.netty.buffer.ByteBuf
+
+import scala.annotation.tailrec
 
 /**
   * A package object to contains extension functions for the [[ByteBuf]] type.
@@ -61,6 +64,19 @@ package object buffer {
         block
       } finally {
         buf.setShort(offset, buf.writerIndex() - offset - 2)
+      }
+    }
+
+    /** Partitions the [[buf]] into partitions of fixed sized blocks.
+      * The size of each block is determined by the given `partitionSize`
+      * parameter. */
+    @tailrec
+    def partition(partitionSize: StorageUnit, blocks: Seq[ByteBuf] = Seq.empty[ByteBuf]): Seq[ByteBuf] = {
+      if (!buf.isReadable || partitionSize <= 0.bytes) {
+        blocks
+      } else {
+        val block = buf.readSafeSlice(partitionSize)
+        partition(partitionSize, blocks :+ block)
       }
     }
 

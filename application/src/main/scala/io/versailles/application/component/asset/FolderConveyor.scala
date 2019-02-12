@@ -50,8 +50,8 @@ final class FolderConveyor(foldersCache: FolderPagesCache) {
   /** Looks up a folder stored within the specified archive and conveys
     * it for transport. */
   def convey(archiveId: ArchiveId, folderId: FolderId, isUrgent: Boolean): Unit = {
-    val pages = getFolderPages(archiveId, folderId)
-    val blocks = partition(Unpooled.wrappedBuffer(pages), BlockSize)
+    val pages = Unpooled.wrappedBuffer(getFolderPages(archiveId, folderId))
+    val blocks = pages.partition(BlockSize)
 
     if (isUrgent) {
       urgent.enqueue(AssetFolder(archiveId, folderId, blocks))
@@ -93,19 +93,6 @@ final class FolderConveyor(foldersCache: FolderPagesCache) {
     val dataLimitInBlocks = dataLimitInBytes / BlockSize.bytes
 
     blockEjectionCount >= dataLimitInBlocks
-  }
-
-  /** Partitions the given [[ByteBuf]] into partitions of fixed sized blocks.
-    * The size of each block is determined by the given `partitionSize`
-    * parameter. */
-  @tailrec
-  private def partition(in: ByteBuf, partitionSize: StorageUnit, blocks: Seq[ByteBuf] = Seq.empty[ByteBuf]): Seq[ByteBuf] = {
-    if (!in.isReadable || partitionSize <= 0.bytes) {
-      blocks
-    } else {
-      val block = in.readSafeSlice(partitionSize)
-      partition(in, partitionSize, blocks :+ block)
-    }
   }
 
   /** Fetches the requested collection of pages that together make up the folder. */
