@@ -1,13 +1,18 @@
 package io.versailles.application.component.character
 
-import io.versailles.domain.model
-import io.versailles.domain.model.{CharacterRepository, Email}
+import io.versailles.domain.model.{CharacterProfile, CharacterRepository, Email}
+
+import scala.concurrent.ExecutionContext
 
 /**
-  * TODO
+  * A [[CharacterRepository]] that saves [[CharacterProfile]]s into
+  * a PostgreSQL database server.
   * @author Sino
   */
 final class PostgresCharacterRepository extends CharacterRepository {
-  override def get(email: Email) = ???
-  override def update(email: Email, character: io.versailles.domain.model.CharacterProfile) = ???
+  override def get(email: Email)(implicit ec: ExecutionContext) =
+    ???
+
+  override def update(email: Email, character: CharacterProfile)(implicit ec: ExecutionContext) =
+    ???
 }

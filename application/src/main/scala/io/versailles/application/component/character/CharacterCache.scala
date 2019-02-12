@@ -2,7 +2,7 @@ package io.versailles.application.component.character
 
 import io.versailles.domain.model.{CharacterProfile, Email}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration.Duration
 
 /**
@@ -10,6 +10,6 @@ import scala.concurrent.duration.Duration
   * @author Sino
   */
 trait CharacterCache {
-  def get(email: Email): Future[Option[CharacterProfile]]
-  def put(email: Email, profile: CharacterProfile, expireAfter: Duration): Future[Boolean]
+  def get(email: Email)(implicit ec: ExecutionContext): Future[Option[CharacterProfile]]
+  def put(email: Email, profile: CharacterProfile, expireAfter: Duration)(implicit ec: ExecutionContext): Future[Boolean]
 }

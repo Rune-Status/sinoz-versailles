@@ -1,7 +1,9 @@
 package io.versailles.application.component.character
 
 import io.versailles.domain.model.{CharacterProfile, Email}
+import redis.RedisClient
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.Duration
 
 /**
@@ -9,7 +11,10 @@ import scala.concurrent.duration.Duration
   * Redis server.
   * @author Sino
   */
-final class RedisCharacterCache extends CharacterCache {
-  override def get(email: Email) = ???
-  override def put(email: Email, profile: CharacterProfile, expireAfter: Duration) = ???
+final class RedisCharacterCache(redisClient: RedisClient) extends CharacterCache {
+  override def get(email: Email)(implicit ec: ExecutionContext) =
+    ???
+
+  override def put(email: Email, profile: CharacterProfile, expireAfter: Duration)(implicit ec: ExecutionContext) =
+    ???
 }
