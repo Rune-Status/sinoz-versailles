@@ -1,14 +1,14 @@
-package io.versailles.application.command
+package io.versailles.application.event
 
 import java.net.Inet4Address
 
 import io.versailles.domain.model.{WorldId, WorldSetting}
 
 /**
-  * A command to let the client switch to another game world.
+  * An event of a user switching between worlds.
   * @author Sino
   */
-case class SwitchWorld(
+case class WorldSwitched(
   address: Inet4Address,
   worldId: WorldId,
   settings: Set[WorldSetting.Type]

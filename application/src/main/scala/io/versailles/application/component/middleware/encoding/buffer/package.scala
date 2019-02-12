@@ -1,5 +1,7 @@
 package io.versailles.application.component.middleware.encoding
 
+import akka.util.ByteString
+import com.twitter.util.StorageUnit
 import io.netty.buffer.ByteBuf
 
 /**
@@ -61,6 +63,19 @@ package object buffer {
         buf.setShort(offset, buf.writerIndex() - offset - 2)
       }
     }
+
+    /** Safely reads the given amount of bytes into a [[ByteBuf]] slice. */
+    def readSafeSlice(length: StorageUnit) = {
+      val inBytes = length.bytes.toInt
+      if (buf.isReadable(inBytes)) {
+        buf.readSlice(inBytes)
+      } else {
+        buf.readSlice(buf.readableBytes())
+      }
+    }
+
+    /** Returns a [[ByteString]] version of this buffer. */
+    def toByteString = ByteString(buf.nioBuffer())
 
     /** Writes the given [[String]] in a sequence that is terminated by a
       * NULL value. */

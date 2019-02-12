@@ -1,31 +1,38 @@
 package io.versailles.application.launch
 
+import java.net.InetSocketAddress
 import java.nio.file.{Path, Paths}
 
 import akka.actor.ActorSystem
-import io.versailles.application.storage.{FileBundle, Storage}
+import io.versailles.application.config.ApplicationConfig
 import redis.RedisClient
 
 /**
-  * The main entry point to this game server application.
+  * Launches this game server application.
   * @author Sino
   */
 object VersaillesLauncher {
-  /** The [[Path]] to the main Versailles configuration file. */
-  val pathToVersaillesConfig = Paths.get("resources/configs/versailles.conf")
+  /** The [[Path]] to the main application configuration file. */
+  private val pathToAppConfig = Paths.get("resources/configs/versailles.conf")
 
+  /** The main entry point. */
   def main(args: Array[String]): Unit = {
-    println("Hello World")
+    val system = ActorSystem("VersaillesSystem")
+
+    val config = loadVersaillesConfig(pathToAppConfig)
+
+    val redisClient = createRedisClient(getInMemoryStoreHost, getInMemoryStorePort)(system)
+
+    val serverPort = new InetSocketAddress(getServerPort)
+
+    // spawns the aggregate root that has ownership of all of the components
+    system.actorOf(VersaillesApplication.props(config, redisClient, serverPort), name = "versailles")
   }
 
-  /** Attempts to load a [[VersaillesConfig]] from a local configuration file
+  /** Attempts to load a [[ApplicationConfig]] from a local configuration file
     * on disk. */
   private def loadVersaillesConfig(path: Path) =
-    VersaillesConfig.load(path)
-
-  /** Attempts to load the asset binary storage into memory. */
-  private def loadAssetStorage(path: Path) =
-    new Storage(FileBundle.open(path.toFile))
+    ApplicationConfig.load(path)
 
   /** Produces a new [[RedisClient]] which is to automatically connect to a
     * local or remote Redis server using the specified details. */

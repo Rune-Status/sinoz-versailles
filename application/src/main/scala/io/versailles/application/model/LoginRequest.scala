@@ -9,7 +9,6 @@ import io.versailles.domain.model.{Email, Machine, Password, ScreenResolution}
 case class LoginRequest(
   email: Email,
   password: Option[Password],
-  clientState: ClientState.Type,
   nonce: Nonce,
   pinCodeInput: Option[PinCodeInput.Type],
   seeds: Seq[Seed],

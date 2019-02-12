@@ -1,14 +1,14 @@
 package io.versailles.application.command
 
-import io.versailles.application.model.{Archive, Folder}
+import io.versailles.application.model.{ArchiveId, FolderId}
 
 /**
-  * A client's command to request the server for a particular
-  * type of [[Folder]] stored within an [[Archive]].
+  * A command to request the server for a particular
+  * type of folder stored within an archive.
   * @author Sino
   */
 case class RequestAssetFolder(
-  archive: Archive,
-  folder: Folder,
+  archive: ArchiveId,
+  folder: FolderId,
   urgent: Boolean
 )

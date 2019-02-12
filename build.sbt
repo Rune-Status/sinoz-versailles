@@ -4,12 +4,9 @@ val commonSettings = Seq(
   scalaVersion := "2.12.8"
 )
 
-val typesafeConfigVersion = "1.3.3"
 val twitterUtilVersion = "19.1.0"
 
 val akkaVersion = "2.5.20"
-
-val logbackVersion = "1.2.3"
 
 val nettyVersion = "4.1.33.Final"
 val scalaTestVersion = "3.0.5"
@@ -43,12 +40,9 @@ lazy val application = project("application")
         "com.typesafe.akka" %% "akka-testkit" % akkaVersion,
 
         "com.github.etaty" %% "rediscala" % redisClientVersion,
-        
-        "ch.qos.logback" % "logback-classic" % logbackVersion,
 
         "io.netty" % "netty-buffer" % nettyVersion,
         
-        "com.typesafe" % "config" % typesafeConfigVersion,
         "com.twitter" %% "util-collection" % twitterUtilVersion,
 
         "org.mindrot" % "jbcrypt" % bcryptLibVersion
