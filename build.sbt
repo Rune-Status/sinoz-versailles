@@ -11,6 +11,8 @@ val akkaVersion = "2.5.20"
 val nettyVersion = "4.1.33.Final"
 val scalaTestVersion = "3.0.5"
 
+val scalaAsyncVersion = "0.9.7"
+
 val redisClientVersion = "1.8.0"
 val bcryptLibVersion = "0.4"
 
@@ -38,6 +40,8 @@ lazy val application = project("application")
       val main = Seq(
         "com.typesafe.akka" %% "akka-actor" % akkaVersion,
         "com.typesafe.akka" %% "akka-testkit" % akkaVersion,
+
+        "org.scala-lang.modules" %% "scala-async" % scalaAsyncVersion,
 
         "com.github.etaty" %% "rediscala" % redisClientVersion,
 
