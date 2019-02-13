@@ -47,18 +47,18 @@ public final class ReleaseManifest {
     public static ReleaseManifest decode(ByteBuffer buffer) {
         /* find out how many entries there are and allocate a new table */
         int size = buffer.limit() / 8;
-        ReleaseManifest table = new ReleaseManifest(size);
+        ReleaseManifest manifest = new ReleaseManifest(size);
 
         /* read the entries */
         for (int i = 0; i < size; i++) {
             int crc = buffer.getInt();
             int version = buffer.getInt();
 
-            table.entries[i] = new Entry(crc, version);
+            manifest.entries[i] = new Entry(crc, version);
         }
 
         /* if it looks good return the table */
-        return table;
+        return manifest;
     }
 
     /**

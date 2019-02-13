@@ -8,18 +8,18 @@ import io.versailles.application.component.middleware.Channel._
 import io.versailles.application.component.middleware.encoding._
 import io.versailles.application.event.ServiceResponded
 import io.versailles.application.event.ServiceResponded.{ClientOutOfDate, MayProceed}
-import io.versailles.application.model.{ClientVersion, CredentialBlockKeySet, Nonce}
+import io.versailles.application.model.{ArchiveChecksum, ClientVersion, CredentialBlockKeySet, Nonce}
 
 object ServiceConnectHandler {
-  def props(channel: ActorRef, versionExpected: ClientVersion, archiveCount: Int, credentialsBlockKeySet: CredentialBlockKeySet, folderBlockSize: StorageUnit, folderConveyor: FolderConveyor) =
-    Props(new ServiceConnectHandler(channel, versionExpected, archiveCount, credentialsBlockKeySet, folderBlockSize, folderConveyor))
+  def props(channel: ActorRef, versionExpected: ClientVersion, archiveChecksums: Seq[ArchiveChecksum], credentialsBlockKeySet: CredentialBlockKeySet, folderBlockSize: StorageUnit, folderConveyor: FolderConveyor) =
+    Props(new ServiceConnectHandler(channel, versionExpected, archiveChecksums, credentialsBlockKeySet, folderBlockSize, folderConveyor))
 }
 
 /**
   * The application logic handler to deal with initial service handshake messages.
   * @author Sino
   */
-final class ServiceConnectHandler(channel: ActorRef, versionExpected: ClientVersion, archiveCount: Int, credentialsBlockKeySet: CredentialBlockKeySet, blockEjectionLimit: StorageUnit, folderConveyor: FolderConveyor) extends Actor {
+final class ServiceConnectHandler(channel: ActorRef, versionExpected: ClientVersion, archiveChecksums: Seq[ArchiveChecksum], credentialsBlockKeySet: CredentialBlockKeySet, blockEjectionLimit: StorageUnit, folderConveyor: FolderConveyor) extends Actor {
   override def receive = {
     case ConnectToAssetService(receivedVersion) =>
       if (receivedVersion.isUpToDateWith(versionExpected)) {
@@ -33,11 +33,11 @@ final class ServiceConnectHandler(channel: ActorRef, versionExpected: ClientVers
   }
 
   private def acceptLoginServiceConnect(nonce: Nonce): Unit = {
-    channel ! SetHandler(LoginRequestHandler.props(nonce))
+    channel ! SetHandler(LoginRequestHandler.props(nonce, archiveChecksums))
 
     respondWith(MayProceed(Some(nonce)))
 
-    channel ! SetDecoder(new LoginRequestDecoder(archiveCount, credentialsBlockKeySet))
+    channel ! SetDecoder(new LoginRequestDecoder(archiveChecksums, credentialsBlockKeySet))
     channel ! SetEncoder(new LoginResponseEncoder())
 
     cleanup()

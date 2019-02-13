@@ -82,7 +82,7 @@ public final class Storage implements Closeable {
     public ReleaseManifest createReleaseManifest() throws IOException {
         /* create the checksum table */
         int size = store.getArchiveCount();
-        ReleaseManifest table = new ReleaseManifest(size);
+        ReleaseManifest manifest = new ReleaseManifest(size);
 
         /*
          * loop through all the archive manifests and get their CRC and versions
@@ -98,20 +98,18 @@ public final class Storage implements Closeable {
                  */
                 ByteBuffer buf = store.readPages(255, i);
                 if (buf.limit() > 0) {
-                    ArchiveManifest manifest = archiveManifests[i];
+                    ArchiveManifest archiveManifest = archiveManifests[i];
 
                     crc = ByteBufferUtils.getCrcChecksum(buf);
-                    version = manifest.getVersion();
-
-                    buf.position(0);
+                    version = archiveManifest.getVersion();
                 }
             }
 
-            table.setEntry(i, new ReleaseManifest.Entry(crc, version));
+            manifest.setEntry(i, new ReleaseManifest.Entry(crc, version));
         }
 
         /* return the table */
-        return table;
+        return manifest;
     }
 
     /**

@@ -18,7 +18,7 @@ import io.versailles.domain.model.{Email, Machine, Password, ScreenResolution}
   * [[RequestLogin]] command.
   * @author Sino
   */
-final class LoginRequestDecoder(archiveCount: Int, keySet: CredentialBlockKeySet) extends MessageDecoder with RSA with XTEA {
+final class LoginRequestDecoder(expectedArchiveChecksums: Seq[ArchiveChecksum], keySet: CredentialBlockKeySet) extends MessageDecoder with RSA with XTEA {
   val NewLoginId = 16
   val ReconnectingId = 18
 
@@ -157,7 +157,9 @@ final class LoginRequestDecoder(archiveCount: Int, keySet: CredentialBlockKeySet
     xteaBlock.readByte()
     xteaBlock.readInt()
 
-    val checksums = (0 until archiveCount).map(_ => ArchiveChecksum(xteaBlock.readInt()))
+    val checksums = expectedArchiveChecksums
+      .indices
+      .map(_ => ArchiveChecksum(xteaBlock.readInt()))
 
     val request = LoginRequest(email, password, nonce, pinCodeInputType, seeds, previousSeeds, checksums, clientVersion, screenResolution, uid, machine)
 

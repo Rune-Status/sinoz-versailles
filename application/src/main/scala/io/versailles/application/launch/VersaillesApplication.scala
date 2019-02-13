@@ -14,6 +14,7 @@ import io.versailles.application.component.middleware.encoding.{ServiceConnectDe
 import io.versailles.application.component.middleware.handler.ServiceConnectHandler
 import io.versailles.application.component.middleware.{ChannelSupervisor, Server}
 import io.versailles.application.config.ApplicationConfig
+import io.versailles.application.model.ArchiveChecksum
 import io.versailles.application.storage.{FileBundle, Storage}
 import redis.RedisClient
 
@@ -77,8 +78,15 @@ final class VersaillesApplication(config: ApplicationConfig, redisClient: RedisC
 
   /** Produces a type of middleware handler to set as the default when a
     * new channel actor is created. */
-  def produceInitialMessageHandler(channel: ActorRef) =
-    ServiceConnectHandler.props(channel, config.clientVersion, assetStorage.getArchiveCount, config.credentialsKeySet, config.assetsServeLimit, folderConveyor)
+  def produceInitialMessageHandler(channel: ActorRef) = {
+    val releaseManifest = assetStorage.createReleaseManifest()
+
+    val archiveChecksums = (0 until releaseManifest.getSize)
+        .map(entryId => releaseManifest.getEntry(entryId))
+        .map(entry => ArchiveChecksum(entry.getCrc))
+
+    ServiceConnectHandler.props(channel, config.clientVersion, archiveChecksums, config.credentialsKeySet, config.assetsServeLimit, folderConveyor)
+  }
 
   /** Produces the initial codecs to set the default when a new channel
     * actor is created. */
