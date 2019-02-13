@@ -1,6 +1,6 @@
 package io.versailles.domain.model
 
-object ActionMenu {
+object ContextMenu {
   object Option {
     case object Attack extends Type(slot = 0, label = "Attack")
     case object Challenge extends Type(slot = 0, label = "Challenge")
@@ -11,15 +11,15 @@ object ActionMenu {
     sealed abstract class Type(val slot: Int, val label: String)
   }
 
-  def create = ActionMenu(Vector.tabulate(16)(_ => None))
+  def create = ContextMenu(Vector.tabulate(16)(_ => None))
 }
 
 /**
   * A right click menu with options when performed on another player.
   * @author Sino
   */
-case class ActionMenu private(options: Vector[Option[ActionMenu.Option.Type]]) extends AnyVal {
-  def show(optionType: ActionMenu.Option.Type) = copy(options = options.updated(optionType.slot, Some(optionType)))
+case class ContextMenu private(options: Vector[Option[ContextMenu.Option.Type]]) extends AnyVal {
+  def show(optionType: ContextMenu.Option.Type) = copy(options = options.updated(optionType.slot, Some(optionType)))
 
-  def hide(optionType: ActionMenu.Option.Type) = copy(options = options.updated(optionType.slot, None))
+  def hide(optionType: ContextMenu.Option.Type) = copy(options = options.updated(optionType.slot, None))
 }
