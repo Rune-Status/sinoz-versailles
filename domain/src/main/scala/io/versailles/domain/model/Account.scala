@@ -9,6 +9,7 @@ case class Account(
   displayName: DisplayName,
   previousDisplayName: Option[DisplayName],
   password: Password,
+  rank: Option[AccountRank.Type],
   subscriptionType: AccountSubscription.Type,
   lastLogin: Option[LastLogin]
 )
