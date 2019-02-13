@@ -56,7 +56,7 @@ final class VersaillesApplication(config: ApplicationConfig, redisClient: RedisC
   val authenticationService = new AuthenticationService(accountService, passwordMatcher)
 
   /** The game service that provides gameplay to users that are logged in. */
-  val gameService = context.actorOf(GameService.props, name = "game")
+  val gameService = context.actorOf(GameService.props(accountService, characterService), name = "game")
 
   /** The login service that logs users into the game world. */
   val loginService = new LoginService(authenticationService, characterService, gameService)
