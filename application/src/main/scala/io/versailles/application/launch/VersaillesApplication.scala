@@ -59,7 +59,7 @@ final class VersaillesApplication(config: ApplicationConfig, redisClient: RedisC
   val gameService = context.actorOf(GameService.props(accountService, characterService), name = "game")
 
   /** The login service that logs users into the game world. */
-  val loginService = new LoginService(authenticationService, characterService, gameService)
+  val loginService = context.actorOf(LoginService.props(authenticationService, characterService, gameService), name = "login")
 
   /** Supervises over the connected client channels. */
   val channelSupervisor = context.actorOf(ChannelSupervisor.props(produceInitialMessageHandler, produceInitialDecoder, produceInitialEncoder), name = "channels")
@@ -85,7 +85,7 @@ final class VersaillesApplication(config: ApplicationConfig, redisClient: RedisC
         .map(entryId => releaseManifest.getEntry(entryId))
         .map(entry => ArchiveChecksum(entry.getCrc))
 
-    ServiceConnectHandler.props(channel, config.clientVersion, archiveChecksums, config.credentialsKeySet, config.assetsServeLimit, folderConveyor)
+    ServiceConnectHandler.props(channel, config.clientVersion, archiveChecksums, loginService, config.credentialsKeySet, config.assetsServeLimit, folderConveyor)
   }
 
   /** Produces the initial codecs to set the default when a new channel
