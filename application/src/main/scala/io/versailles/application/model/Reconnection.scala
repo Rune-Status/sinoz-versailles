@@ -7,6 +7,6 @@ import io.versailles.domain.model.Position
   * @author Sino
   */
 case class Reconnection(
-  position: Position,
+  position: Position.TileScope,
   playerLocations: Seq[Int]
 )

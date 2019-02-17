@@ -7,4 +7,4 @@ import io.versailles.domain.model.Position
   * [[Position]].
   * @author Sino
   */
-case class RoamableMapRecentered(position: Position)
+case class RoamableMapRecentered(position: Position.TileScope)

@@ -10,7 +10,7 @@ case class NewLogin(
   pid: PID,
   rank: Option[AccountRank.Type],
   ironMan: Option[IronMan.Type],
-  position: Position,
+  position: Position.TileScope,
   xteaKeySets: Seq[Vector[Int]],
   playerLocations: Seq[Int]
 )

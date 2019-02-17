@@ -16,13 +16,13 @@ object RoamableMap {
   * A 104 by 104 area of tiles that the player can currently roam.
   * @author Sino
   */
-case class RoamableMap(lastRecenter: Position) {
+case class RoamableMap(lastRecenter: Position.TileScope) {
   import RoamableMap._
 
-  def recenter(position: Position) =
+  def recenter(position: Position.TileScope) =
     copy(lastRecenter = position)
 
-  def reachedEdge(position: Position) = {
+  def reachedEdge(position: Position.TileScope) = {
     val mapX = position.xRelativeFrom(lastRecenter)
     val mapY = position.yRelativeFrom(lastRecenter)
 
