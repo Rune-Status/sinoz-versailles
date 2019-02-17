@@ -5,5 +5,6 @@ package io.versailles.domain.model
   * @author Sino
   */
 case class CharacterProfile(
+  position: Position.TileScope,
   ironMan: Option[IronMan.Type]
 )

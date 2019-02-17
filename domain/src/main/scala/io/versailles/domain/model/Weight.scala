@@ -12,9 +12,9 @@ object Weight {
   * @author Sino
   */
 case class Weight(private val kilos: Float) extends AnyVal {
-  def lose(amountInKilos: Float) = copy(kilos = kilos - amountInKilos)
+  def lose(amount: Weight) = copy(kilos = kilos - amount.kilos)
 
-  def gain(amountInKilos: Float) = copy(kilos = kilos + amountInKilos)
+  def gain(amount: Weight) = copy(kilos = kilos + amount.kilos)
 
   def toKilos = kilos
 }

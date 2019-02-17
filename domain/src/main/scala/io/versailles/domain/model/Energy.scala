@@ -14,11 +14,11 @@ object Energy {
   * @author Sino
   */
 case class Energy(private val units: Int) extends AnyVal {
-  def +(amount: Int) =
-    copy(units = Math.min(units + amount, Energy.MaxUnits.units))
+  def +(energy: Energy) =
+    copy(units = Math.min(units + energy.toUnits, Energy.MaxUnits.units))
 
-  def -(amount: Int) =
-    copy(units = Math.max(units - amount, Energy.MinUnits.units))
+  def -(energy: Energy) =
+    copy(units = Math.max(units - energy.toUnits, Energy.MinUnits.units))
 
   def toUnits = units
 

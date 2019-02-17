@@ -6,7 +6,7 @@ object Inventory {
     Inventory(
       descriptor = descriptor,
       stackMode = stackMode,
-      slots = Vector.tabulate(descriptor.capacity.toValue)(id => InventorySlot(id, None))
+      slots = Vector.tabulate(descriptor.capacity)(id => InventorySlot(id, None))
     )
 }
 

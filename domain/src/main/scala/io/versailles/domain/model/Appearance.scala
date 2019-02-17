@@ -29,6 +29,14 @@ object Appearance {
     feet: Int,
     skin: Int
   )
+
+  /** An indication of whether the physical appearance is to be
+    * hidden or shown to other client users. */
+  object Presentation {
+    case object Hidden extends Type
+    case object Shown extends Type
+    sealed abstract class Type
+  }
 }
 
 /**
@@ -37,8 +45,12 @@ object Appearance {
   */
 case class Appearance(
   sex: Sex.Type,
-  styles: Styles,
-  colours: Colours,
   skullIcon: Option[SkullIcon.Type],
   prayerIcon: Option[PrayerIcon.Type],
+  styles: Styles,
+  colours: Colours,
+  displayName: DisplayName,
+  presentation: Presentation.Type,
+  gamesRoomSkillLevel: Level,
+  transmogrification: Option[NpcId]
 )

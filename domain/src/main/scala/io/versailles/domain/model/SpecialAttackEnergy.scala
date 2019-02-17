@@ -14,11 +14,11 @@ object SpecialAttackEnergy {
   * @author Sino
   */
 case class SpecialAttackEnergy(private val percentage: Int) extends AnyVal {
-  def drain(amount: Int) =
-    copy(percentage = Math.max(percentage - amount, SpecialAttackEnergy.MinPercentage))
+  def drain(energy: SpecialAttackEnergy) =
+    copy(percentage = Math.max(percentage - energy.toPercentage, SpecialAttackEnergy.MinPercentage))
 
-  def restore(amount: Int) =
-    copy(percentage = Math.min(percentage + amount, SpecialAttackEnergy.MaxPercentage))
+  def restore(energy: SpecialAttackEnergy) =
+    copy(percentage = Math.min(percentage + energy.toPercentage, SpecialAttackEnergy.MaxPercentage))
 
   def toPercentage = percentage
 }

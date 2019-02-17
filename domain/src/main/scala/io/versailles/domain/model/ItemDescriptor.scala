@@ -1,7 +1,7 @@
 package io.versailles.domain.model
 
 /**
-  * Describes an item.
+  * Describes an [[Item]].
   * @author Sino
   */
 case class ItemDescriptor(

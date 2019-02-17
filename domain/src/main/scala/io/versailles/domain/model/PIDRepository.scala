@@ -6,11 +6,10 @@ package io.versailles.domain.model
   */
 trait PIDRepository {
   def obtain(): Option[PID]
-
   def release(pid: PID)
 
-  def isEmpty(): Boolean
-  def nonEmpty(): Boolean
-
   def size(): Int
+
+  def isEmpty = size == 0
+  def nonEmpty = size > 0
 }

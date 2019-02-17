@@ -5,6 +5,6 @@ package io.versailles.domain.model
   * @author Sino
   */
 case class InventoryDescriptor(
-  id: InventoryId,
-  capacity: InventoryCapacity
+  id: Int,
+  capacity: Int
 )
